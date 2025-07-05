@@ -172,6 +172,7 @@ import { AdminSettingsComponent } from "./dashboard/component/admin/settings/adm
 import { catchError, of } from "rxjs";
 import { FormlyRepeatDndComponent } from "./common/formly/repeat-dnd/repeat-dnd.component";
 import { NzInputNumberModule } from "ng-zorro-antd/input-number";
+import { UserDatasetReadmeComponent } from './dashboard/component/user/user-dataset/user-dataset-explorer/user-dataset-readme/user-dataset-readme.component';
 
 registerLocaleData(en);
 
@@ -264,6 +265,7 @@ registerLocaleData(en);
     HubSearchResultComponent,
     ComputingUnitSelectionComponent,
     AdminSettingsComponent,
+    UserDatasetReadmeComponent,
   ],
   imports: [
     BrowserModule,

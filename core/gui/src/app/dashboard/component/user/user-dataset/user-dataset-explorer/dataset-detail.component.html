@@ -147,6 +147,16 @@
         </div>
       </div>
     </nz-card>
+
+    <!-- README Section - appears above file content -->
+    <texera-user-dataset-readme
+      *ngIf="selectedVersion"
+      [did]="did"
+      [isMaximized]="isMaximized"
+      [userHasWriteAccess]="userHasWriteAccess()"
+      (userMakeChanges)="userMakeChanges.emit()">
+    </texera-user-dataset-readme>
+
     <nz-empty
       class="empty-version-indicator"
       *ngIf="!selectedVersion"
