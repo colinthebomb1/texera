@@ -17,6 +17,15 @@
  under the License.
 -->
 
+<!-- Loading State -->
+<nz-card *ngIf="isLoading" class="readme-loading-card">
+  <nz-spin nzTip="Loading README...">
+    <nz-alert
+      nzType="info"
+      nzMessage="Loading README content"></nz-alert>
+  </nz-spin>
+</nz-card>
+
 <!-- No README State - show nice empty state -->
 <nz-card
   *ngIf="!isLoading && !readmeExists"
@@ -93,19 +102,42 @@
     </div>
   </div>
 
-  <!-- README Content -->
+  <!-- README Content View Mode -->
   <div *ngIf="!isEditing" class="readme-view">
     <markdown [data]="readmeContent"></markdown>
   </div>
 
-  <!-- README Editor -->
-  <div *ngIf="isEditing" class="readme-editor">
-    <textarea
-      [(ngModel)]="editingContent"
-      class="markdown-textarea"
-      placeholder="Write your README in Markdown..."
-      rows="10">
-    </textarea>
+  <!-- README Editor Mode with Split View -->
+  <div *ngIf="isEditing" class="readme-editor-container">
+    <div class="editor-split-view">
+      <!-- Left pane: Code editor -->
+      <div class="editor-pane">
+        <h5 class="pane-title">
+          <i nz-icon nzType="edit"></i>
+          Editor
+        </h5>
+        <ngx-codemirror
+          [(ngModel)]="editingContent"
+          [options]="editorOptions"
+          class="markdown-editor">
+        </ngx-codemirror>
+      </div>
+
+      <!-- Divider -->
+      <div class="editor-divider"></div>
+
+      <!-- Right pane: Live preview -->
+      <div class="preview-pane">
+        <h5 class="pane-title">
+          <i nz-icon nzType="eye"></i>
+          Preview
+        </h5>
+        <div class="preview-content">
+          <markdown [data]="editingContent"></markdown>
+        </div>
+      </div>
+    </div>
+
     <div class="editor-help">
       <small>
         <i nz-icon nzType="info-circle"></i>

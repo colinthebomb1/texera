@@ -149,13 +149,21 @@
     </nz-card>
 
     <!-- README Section - appears above file content -->
-    <texera-user-dataset-readme
-      *ngIf="selectedVersion"
-      [did]="did"
-      [isMaximized]="isMaximized"
-      [userHasWriteAccess]="userHasWriteAccess()"
-      (userMakeChanges)="userMakeChanges.emit()">
-    </texera-user-dataset-readme>
+    <nz-card
+      *ngIf="currentDisplayedFileName !== 'README.md' && !currentDisplayedFileName.endsWith('/README.md')"
+      class="readme-section-card">
+
+      <texera-user-dataset-readme
+        [did]="did"
+        [dvid]="selectedVersion?.dvid"
+        [selectedVersion]="selectedVersion"
+        [datasetName]="datasetName"
+        [isMaximized]="isMaximized"
+        [userHasWriteAccess]="userDatasetAccessLevel === 'WRITE'"
+        [isLogin]="isLogin"
+        (userMakeChanges)="onReadmeChanged()">
+      </texera-user-dataset-readme>
+    </nz-card>
 
     <nz-empty
       class="empty-version-indicator"
