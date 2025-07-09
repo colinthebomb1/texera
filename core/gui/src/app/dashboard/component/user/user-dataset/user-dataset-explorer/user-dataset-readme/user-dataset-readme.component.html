@@ -28,7 +28,7 @@
   </nz-spin>
 </nz-card>
 
-<!-- No README State - show nice empty state -->
+<!-- No README State-->
 <nz-card
   *ngIf="!isLoading && !readmeExists"
   class="readme-empty-card">
@@ -130,7 +130,7 @@
     *ngIf="isEditing"
     class="readme-editor-container">
     <div class="editor-split-view">
-      <!-- Left pane: Code editor -->
+      <!-- Left pane: text editor -->
       <div class="editor-pane">
         <h5 class="pane-title">
           <i
@@ -247,10 +247,9 @@
         </textarea>
       </div>
 
-      <!-- Divider -->
       <div class="editor-divider"></div>
 
-      <!-- Right pane: Live preview -->
+      <!-- Right pane: markdown preview -->
       <div class="preview-pane">
         <h5 class="pane-title">
           <i
