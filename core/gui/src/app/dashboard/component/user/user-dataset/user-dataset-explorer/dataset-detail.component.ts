@@ -34,11 +34,12 @@ import { DownloadService } from "../../../../service/user/download/download.serv
 import { formatSize } from "src/app/common/util/size-formatter.util";
 import { UserService } from "../../../../../common/service/user/user.service";
 import { isDefined } from "../../../../../common/util/predicate";
-import { ActionType, EntityType, HubService } from "../../../../../hub/service/hub.service";
+import { ActionType, EntityType, HubService, LikedStatus } from "../../../../../hub/service/hub.service";
 import { FileUploadItem } from "../../../../type/dashboard-file.interface";
 import { DatasetStagedObject } from "../../../../../common/type/dataset-staged-object";
 import { NzModalService } from "ng-zorro-antd/modal";
 import { UserDatasetVersionCreatorComponent } from "./user-dataset-version-creator/user-dataset-version-creator.component";
+import { AdminSettingsService } from "../../../../service/admin/settings/admin-settings.service";
 
 export const THROTTLE_TIME_MS = 1000;
 
@@ -76,6 +77,9 @@ export class DatasetDetailComponent implements OnInit {
   public displayPreciseViewCount = false;
 
   userHasPendingChanges: boolean = false;
+  // Uploading setting
+  chunkSizeMB: number = 50;
+  maxConcurrentChunks: number = 10;
 
   //  List of upload tasks – each task tracked by its filePath
   public uploadTasks: Array<
@@ -94,7 +98,8 @@ export class DatasetDetailComponent implements OnInit {
     private notificationService: NotificationService,
     private downloadService: DownloadService,
     private userService: UserService,
-    private hubService: HubService
+    private hubService: HubService,
+    private adminSettingsService: AdminSettingsService
   ) {
     this.userService
       .userChanged()
@@ -154,13 +159,14 @@ export class DatasetDetailComponent implements OnInit {
     }
 
     this.hubService
-      .isLiked(this.did, this.currentUid, EntityType.Dataset)
+      .isLiked([this.did], [EntityType.Dataset])
       .pipe(untilDestroyed(this))
-      .subscribe((isLiked: boolean) => {
-        this.isLiked = isLiked;
+      .subscribe((isLiked: LikedStatus[]) => {
+        this.isLiked = isLiked.length > 0 ? isLiked[0].isLiked : false;
       });
-  }
 
+    this.loadUploadSettings();
+  }
   public onClickOpenVersionCreator() {
     if (this.did) {
       const modal = this.modalService.create({
@@ -280,8 +286,7 @@ export class DatasetDetailComponent implements OnInit {
 
   onClickDownloadCurrentFile = (): void => {
     if (!this.did || !this.selectedVersion?.dvid) return;
-
-    this.downloadService.downloadSingleFile(this.currentDisplayedFileName).pipe(untilDestroyed(this)).subscribe();
+    this.downloadService.downloadSingleFile(this.currentDisplayedFileName);
   };
 
   onClickScaleTheView() {
@@ -326,6 +331,17 @@ export class DatasetDetailComponent implements OnInit {
     return task.filePath;
   }
 
+  private loadUploadSettings(): void {
+    this.adminSettingsService
+      .getSetting("multipart_upload_chunk_size_mb")
+      .pipe(untilDestroyed(this))
+      .subscribe(value => (this.chunkSizeMB = parseInt(value)));
+    this.adminSettingsService
+      .getSetting("max_number_of_concurrent_uploading_file_chunks")
+      .pipe(untilDestroyed(this))
+      .subscribe(value => (this.maxConcurrentChunks = parseInt(value)));
+  }
+
   onNewUploadFilesChanged(files: FileUploadItem[]) {
     if (this.did) {
       files.forEach((file, idx) => {
@@ -337,10 +353,15 @@ export class DatasetDetailComponent implements OnInit {
           uploadId: "",
           physicalAddress: "",
         });
-
         // Start multipart upload
         this.datasetService
-          .multipartUpload(this.datasetName, file.name, file.file)
+          .multipartUpload(
+            this.datasetName,
+            file.name,
+            file.file,
+            this.chunkSizeMB * 1024 * 1024,
+            this.maxConcurrentChunks
+          )
           .pipe(untilDestroyed(this))
           .subscribe({
             next: progress => {
@@ -463,7 +484,7 @@ export class DatasetDetailComponent implements OnInit {
 
     if (this.isLiked) {
       this.hubService
-        .postUnlike(this.did, userId, EntityType.Dataset)
+        .postUnlike(this.did, EntityType.Dataset)
         .pipe(untilDestroyed(this))
         .subscribe((success: boolean) => {
           if (success) {
@@ -478,7 +499,7 @@ export class DatasetDetailComponent implements OnInit {
         });
     } else {
       this.hubService
-        .postLike(this.did, userId, EntityType.Dataset)
+        .postLike(this.did, EntityType.Dataset)
         .pipe(untilDestroyed(this))
         .subscribe((success: boolean) => {
           if (success) {

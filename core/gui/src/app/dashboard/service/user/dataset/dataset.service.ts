@@ -44,7 +44,7 @@ export const DATASET_VERSION_LATEST_URL = DATASET_VERSION_BASE_URL + "/latest";
 export const DEFAULT_DATASET_NAME = "Untitled dataset";
 export const DATASET_PUBLIC_VERSION_BASE_URL = "publicVersion";
 export const DATASET_PUBLIC_VERSION_RETRIEVE_LIST_URL = DATASET_PUBLIC_VERSION_BASE_URL + "/list";
-export const DATASET_GET_OWNERS_URL = DATASET_BASE_URL + "/datasetUserAccess";
+export const DATASET_GET_OWNERS_URL = DATASET_BASE_URL + "/user-dataset-owners";
 
 export interface MultipartUploadProgress {
   filePath: string;
@@ -94,6 +94,29 @@ export class DatasetService {
   }
 
   /**
+   * Retrieves a single file from a dataset version using a pre-signed URL.
+   * @param filePath Relative file path within the dataset.
+   * @param isLogin Determine whether a user is currently logged in
+   * @returns void File is downloaded natively by the browser.
+   */
+  public retrieveDatasetVersionSingleFileViaBrowser(filePath: string, isLogin: boolean = true): void {
+    const endpointSegment = isLogin ? "presign-download-s3" : "public-presign-download-s3";
+    const endpoint = `${AppSettings.getApiEndpoint()}/${DATASET_BASE_URL}/${endpointSegment}?filePath=${encodeURIComponent(filePath)}`;
+
+    this.http.get<{ presignedUrl: string }>(endpoint).subscribe({
+      next: response => {
+        const presignedUrl = response.presignedUrl;
+        const downloadUrl = document.createElement("a");
+
+        downloadUrl.href = presignedUrl;
+        document.body.appendChild(downloadUrl);
+        downloadUrl.click();
+        downloadUrl.remove();
+      },
+    });
+  }
+
+  /**
    * Retrieves a zip file of a dataset version.
    * @param did Dataset ID
    * @param dvid (Optional) Dataset version ID. If omitted, the latest version is downloaded.
@@ -137,9 +160,18 @@ export class DatasetService {
    * Handles multipart upload for large files using RxJS,
    * with a concurrency limit on how many parts we process in parallel.
    */
-  public multipartUpload(datasetName: string, filePath: string, file: File): Observable<MultipartUploadProgress> {
-    const partCount = Math.ceil(file.size / this.config.env.multipartUploadChunkSizeByte);
-    const concurrencyLimit = this.config.env.maxNumberOfConcurrentUploadingFileChunks;
+  public multipartUpload(
+    datasetName: string,
+    filePath: string,
+    file: File,
+    partSize: number,
+    concurrencyLimit: number
+  ): Observable<MultipartUploadProgress> {
+    const partCount = Math.ceil(file.size / partSize);
+
+    // track progress bar
+    let totalBytesUploaded = 0;
+    let lastReportedProgress = 0;
 
     return new Observable(observer => {
       this.initiateMultipartUpload(datasetName, filePath, partCount)
@@ -160,44 +192,76 @@ export class DatasetService {
 
             // Keep track of all uploaded parts
             const uploadedParts: { PartNumber: number; ETag: string }[] = [];
-            let uploadedCount = 0;
 
             // 1) Convert presignedUrls into a stream of URLs
             return from(presignedUrls).pipe(
               // 2) Use mergeMap with concurrency limit to upload chunk by chunk
               mergeMap((url, index) => {
-                const start = index * this.config.env.multipartUploadChunkSizeByte;
-                const end = Math.min(start + this.config.env.multipartUploadChunkSizeByte, file.size);
+                const start = index * partSize;
+                const end = Math.min(start + partSize, file.size);
                 const chunk = file.slice(start, end);
 
                 // Upload the chunk
-                return from(fetch(url, { method: "PUT", body: chunk })).pipe(
-                  switchMap(response => {
-                    if (!response.ok) {
-                      return throwError(() => new Error(`Failed to upload part ${index + 1}`));
+                return new Observable(partObserver => {
+                  const xhr = new XMLHttpRequest();
+
+                  xhr.upload.addEventListener("progress", event => {
+                    if (event.lengthComputable) {
+                      const currentTotalUploaded = totalBytesUploaded + event.loaded;
+                      const currentProgress = (currentTotalUploaded / file.size) * 100;
+
+                      // Prevent backward progress
+                      if (currentProgress > lastReportedProgress) {
+                        lastReportedProgress = currentProgress;
+                        observer.next({
+                          filePath,
+                          percentage: Math.round(currentProgress),
+                          status: "uploading",
+                          uploadId,
+                          physicalAddress,
+                        });
+                      }
                     }
-                    const etag = response.headers.get("ETag")?.replace(/"/g, "");
-                    if (!etag) {
-                      return throwError(() => new Error(`Missing ETag for part ${index + 1}`));
+                  });
+
+                  xhr.addEventListener("load", () => {
+                    if (xhr.status === 200 || xhr.status === 201) {
+                      const etag = xhr.getResponseHeader("ETag")?.replace(/"/g, "");
+                      if (!etag) {
+                        partObserver.error(new Error(`Missing ETag for part ${index + 1}`));
+                        return;
+                      }
+                      totalBytesUploaded += chunk.size;
+                      uploadedParts.push({ PartNumber: index + 1, ETag: etag });
+
+                      const finalProgress = (totalBytesUploaded / file.size) * 100;
+
+                      // Prevent backward progress
+                      if (finalProgress > lastReportedProgress) {
+                        lastReportedProgress = finalProgress;
+                        observer.next({
+                          filePath,
+                          percentage: Math.round(finalProgress),
+                          status: "uploading",
+                          uploadId,
+                          physicalAddress,
+                        });
+                      }
+                      partObserver.complete();
+                    } else {
+                      partObserver.error(new Error(`Failed to upload part ${index + 1}`));
                     }
+                  });
 
-                    // Record the uploaded part
-                    uploadedParts.push({ PartNumber: index + 1, ETag: etag });
-                    uploadedCount++;
+                  xhr.addEventListener("error", () => {
+                    partObserver.error(new Error(`Failed to upload part ${index + 1}`));
+                  });
 
-                    // Emit progress after each part
-                    observer.next({
-                      filePath,
-                      percentage: Math.round((uploadedCount / partCount) * 100),
-                      status: "uploading",
-                      uploadId: uploadId,
-                      physicalAddress: physicalAddress,
-                    });
-
-                    return of(null); // indicate success
-                  })
-                );
+                  xhr.open("PUT", url);
+                  xhr.send(chunk);
+                });
               }, concurrencyLimit),
+
               // 3) Collect results from all uploads (like forkJoin, but respects concurrency)
               toArray(),
               // 4) Finalize if all parts succeeded
@@ -218,7 +282,7 @@ export class DatasetService {
                 // If an error occurred, abort the upload
                 observer.next({
                   filePath,
-                  percentage: Math.round((uploadedCount / partCount) * 100),
+                  percentage: Math.round((uploadedParts.length / partCount) * 100),
                   status: "aborted",
                   uploadId: uploadId,
                   physicalAddress: physicalAddress,
@@ -390,10 +454,6 @@ export class DatasetService {
       `${AppSettings.getApiEndpoint()}/${DATASET_BASE_URL}/${did}/${DATASET_UPDATE_PUBLICITY_URL}`,
       {}
     );
-  }
-
-  public getDatasetOwners(did: number): Observable<number[]> {
-    return this.http.get<number[]>(`${AppSettings.getApiEndpoint()}/${DATASET_GET_OWNERS_URL}?did=${did}`);
   }
 
   public retrieveOwners(): Observable<string[]> {
