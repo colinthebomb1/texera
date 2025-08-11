@@ -40,6 +40,7 @@ import { DatasetStagedObject } from "../../../../../common/type/dataset-staged-o
 import { NzModalService } from "ng-zorro-antd/modal";
 import { UserDatasetVersionCreatorComponent } from "./user-dataset-version-creator/user-dataset-version-creator.component";
 import { AdminSettingsService } from "../../../../service/admin/settings/admin-settings.service";
+import {of} from "rxjs";
 
 export const THROTTLE_TIME_MS = 1000;
 
@@ -80,6 +81,11 @@ export class DatasetDetailComponent implements OnInit {
   // Uploading setting
   chunkSizeMB: number = 50;
   maxConcurrentChunks: number = 10;
+
+  // Quick README creation
+  showQuickReadmeForm: boolean = false;
+  quickReadmeContent: string = "# Dataset README\n\nDescribe your dataset here...";
+  isCreatingReadme: boolean = false;
 
   //  List of upload tasks – each task tracked by its filePath
   public uploadTasks: Array<
@@ -205,7 +211,7 @@ export class DatasetDetailComponent implements OnInit {
     }
   }
 
-  public onReadmeChanged(): void {
+  public onFileChanged(): void {
     this.userMakeChanges.emit();
 
     this.retrieveDatasetVersionList();
@@ -220,6 +226,84 @@ export class DatasetDetailComponent implements OnInit {
         }
       }, 0);
     }
+  }
+
+  public onClickOpenReadmeEditor(): void {
+    // Find README in file tree and open it
+    const readmeNode = this.findFileInTree("README.md");
+    if (readmeNode) {
+      this.loadFileContent(readmeNode);
+    }
+  }
+
+  public onClickCreateReadme(): void {
+    if (!this.did || !this.quickReadmeContent.trim()) return;
+
+    this.isCreatingReadme = true;
+
+    this.datasetService
+      .getDataset(this.did, this.isLogin)
+      .pipe(
+        switchMap(dashboardDataset => {
+          const datasetName = dashboardDataset.dataset.name;
+          const readmeBlob = new Blob([this.quickReadmeContent], { type: "text/markdown" });
+          const readmeFile = new File([readmeBlob], "README.md", { type: "text/markdown" });
+          return this.datasetService.multipartUpload(
+            datasetName,
+            "README.md",
+            readmeFile,
+            this.chunkSizeMB * 1024 * 1024,
+            this.maxConcurrentChunks
+          );
+        }),
+        switchMap(progress => {
+          if (progress.status === "finished") {
+            return this.datasetService.createDatasetVersion(this.did!, "Created README.md");
+          }
+          return of(progress);
+        }),
+        untilDestroyed(this)
+      )
+      .subscribe({
+        next: result => {
+          if (result && typeof result === "object" && "dvid" in result) {
+            this.isCreatingReadme = false;
+            this.showQuickReadmeForm = false;
+            this.notificationService.success("README created successfully!");
+            this.onFileChanged();
+          }
+        },
+        error: (error: unknown) => {
+          this.isCreatingReadme = false;
+          console.error("Error creating README:", error);
+          this.notificationService.error("Failed to create README");
+        },
+      });
+  }
+
+  public hasReadmeFile(): boolean {
+    return this.findFileInTree("README.md") !== null;
+  }
+
+  private findFileInTree(fileName: string, nodes: DatasetFileNode[] = this.fileTreeNodeList): DatasetFileNode | null {
+    for (const node of nodes) {
+      if (node.name === fileName && node.type === "file") {
+        return node;
+      }
+      if (node.children) {
+        const found = this.findFileInTree(fileName, node.children);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  public isEditableFile(fileName: string): boolean {
+    const extension = fileName.toLowerCase().split('.').pop();
+    const editableExtensions = ['md', 'markdown', 'txt', 'log', 'json', 'xml', 'csv', 'yml', 'yaml'];
+    return editableExtensions.includes(extension || '');
   }
 
   onPublicStatusChange(checked: boolean): void {

@@ -36,29 +36,31 @@ import { of } from "rxjs";
 
 @UntilDestroy()
 @Component({
-  selector: "texera-user-dataset-readme",
-  templateUrl: "./user-dataset-readme.component.html",
-  styleUrls: ["./user-dataset-readme.component.scss"],
+  selector: "texera-user-dataset-file-editor",
+  templateUrl: "./user-dataset-file-editor.component.html",
+  styleUrls: ["./user-dataset-file-editor.component.scss"],
 })
-export class UserDatasetReadmeComponent implements OnInit, OnChanges {
+export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   @Input() did: number | undefined;
   @Input() dvid: number | undefined;
   @Input() selectedVersion: any | undefined;
   @Input() datasetName: string = "";
+  @Input() filePath: string = "";
   @Input() isMaximized: boolean = false;
   @Input() userHasWriteAccess: boolean = false;
   @Input() isLogin: boolean = true;
+  @Input() chunkSizeMB!: number;
+  @Input() maxConcurrentChunks!: number;
   @Output() userMakeChanges = new EventEmitter<void>();
 
-  @ViewChild("markdownTextarea") markdownTextarea!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild("fileTextarea") fileTextarea!: ElementRef<HTMLTextAreaElement>;
 
-  public readmeContent: string = "";
+  public fileContent: string = "";
   public isEditing: boolean = false;
-  public readmeExists: boolean = false;
+  public fileExists: boolean = false;
   public isLoading: boolean = false;
   public editingContent: string = "";
-
-  private readonly README_FILE_PATH = "README.md";
+  public fileType: 'markdown' | 'text' | 'unsupported' = 'unsupported';
 
   constructor(
     private datasetService: DatasetService,
@@ -66,28 +68,51 @@ export class UserDatasetReadmeComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    if (this.dvid && this.datasetName && this.selectedVersion) {
-      this.loadReadme();
+    if (this.dvid && this.datasetName && this.selectedVersion && this.filePath) {
+      this.determineFileType();
+      this.loadFile();
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (
-      (changes["dvid"] || changes["datasetName"] || changes["selectedVersion"]) &&
+      (changes["dvid"] || changes["datasetName"] || changes["selectedVersion"] || changes["filePath"]) &&
       this.dvid &&
       this.datasetName &&
-      this.selectedVersion
+      this.selectedVersion &&
+      this.filePath
     ) {
-      this.loadReadme();
+      this.determineFileType();
+      this.loadFile();
     }
   }
 
-  private loadReadme(): void {
-    if (!this.did || !this.dvid || !this.datasetName || !this.selectedVersion) return;
+  private determineFileType(): void {
+    const extension = this.filePath.toLowerCase().split('.').pop();
+    switch (extension) {
+      case 'md':
+      case 'markdown':
+        this.fileType = 'markdown';
+        break;
+      case 'txt':
+      case 'log':
+      case 'json':
+      case 'xml':
+      case 'yml':
+      case 'yaml':
+        this.fileType = 'text';
+        break;
+      default:
+        this.fileType = 'unsupported';
+    }
+  }
+
+  private loadFile(): void {
+    if (!this.did || !this.dvid || !this.datasetName || !this.selectedVersion || !this.filePath) return;
 
     this.isLoading = true;
 
-    const fullPath = `/texera/${this.datasetName}/${this.selectedVersion.name}/${this.README_FILE_PATH}`;
+    const fullPath = `/texera/${this.datasetName}/${this.selectedVersion.name}/${this.filePath}`;
 
     this.datasetService
       .retrieveDatasetVersionSingleFile(fullPath, this.isLogin)
@@ -105,42 +130,48 @@ export class UserDatasetReadmeComponent implements OnInit, OnChanges {
       .subscribe({
         next: content => {
           this.isLoading = false;
-          this.readmeExists = true;
-          this.readmeContent = content;
+          this.fileExists = true;
+          this.fileContent = content;
           this.editingContent = content;
         },
         error: () => {
           this.isLoading = false;
-          this.readmeExists = false;
-          this.readmeContent = "";
+          this.fileExists = false;
+          this.fileContent = "";
           this.editingContent = "";
-          console.log("README not found or error loading");
+          console.log("File not found or error loading");
         },
       });
   }
 
-  public createReadme(): void {
+  public createFile(): void {
     if (!this.did || !this.userHasWriteAccess) return;
 
-    const initialContent = "# Dataset README\n\nDescribe your dataset here...";
-    this.uploadReadmeContent(initialContent, "README created successfully");
+    let initialContent = "";
+    if (this.fileType === 'markdown') {
+      initialContent = `# ${this.getFileName()}\n\nAdd your content here...`;
+    } else {
+      initialContent = "Add your content here...";
+    }
+
+    this.uploadFileContent(initialContent, `${this.getFileName()} created successfully`);
   }
 
   public startEditing(): void {
-    if (!this.userHasWriteAccess) return;
-    this.editingContent = this.readmeContent;
+    if (!this.userHasWriteAccess || this.fileType === 'unsupported') return;
+    this.editingContent = this.fileContent;
     this.isEditing = true;
   }
 
   public cancelEditing(): void {
-    this.editingContent = this.readmeContent;
+    this.editingContent = this.fileContent;
     this.isEditing = false;
   }
 
   public onEditorKeydown(event: KeyboardEvent): void {
     if ((event.ctrlKey || event.metaKey) && event.key === "s") {
       event.preventDefault();
-      this.saveReadme();
+      this.saveFile();
     }
 
     if (event.key === "Tab") {
@@ -159,9 +190,9 @@ export class UserDatasetReadmeComponent implements OnInit, OnChanges {
   }
 
   public insertMarkdown(before: string, after: string = "", placeholder: string = ""): void {
-    if (!this.markdownTextarea) return;
+    if (!this.fileTextarea || this.fileType !== 'markdown') return;
 
-    const textarea = this.markdownTextarea.nativeElement;
+    const textarea = this.fileTextarea.nativeElement;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
@@ -191,46 +222,46 @@ export class UserDatasetReadmeComponent implements OnInit, OnChanges {
     });
   }
 
-  public saveReadme(): void {
+  public saveFile(): void {
     if (!this.did || !this.userHasWriteAccess) return;
 
-    if (this.editingContent === this.readmeContent) {
-      this.notificationService.warning("No changes detected in README content");
+    if (this.editingContent === this.fileContent) {
+      this.notificationService.warning("No changes detected in file content");
       return;
     }
 
-    this.uploadReadmeContent(this.editingContent, "README updated successfully");
+    this.uploadFileContent(this.editingContent, `${this.getFileName()} updated successfully`);
   }
 
-  public deleteReadme(): void {
+  public deleteFile(): void {
     if (!this.did || !this.userHasWriteAccess) return;
 
     this.datasetService
-      .deleteDatasetFile(this.did, this.README_FILE_PATH)
+      .deleteDatasetFile(this.did, this.filePath)
       .pipe(
         // After deleting, create a new version to save changes.
-        switchMap(() => this.datasetService.createDatasetVersion(this.did!, "Deleted README.md")),
+        switchMap(() => this.datasetService.createDatasetVersion(this.did!, `Deleted ${this.filePath}`)),
         untilDestroyed(this)
       )
       .subscribe({
         next: () => {
-          this.readmeExists = false;
-          this.readmeContent = "";
+          this.fileExists = false;
+          this.fileContent = "";
           this.editingContent = "";
           this.isEditing = false;
-          this.notificationService.success("README deleted successfully");
+          this.notificationService.success(`${this.getFileName()} deleted successfully`);
 
           // Emit the change to refresh file version screen
           this.userMakeChanges.emit();
         },
         error: (error: unknown) => {
-          console.error("Error deleting README:", error);
-          this.notificationService.error("Failed to delete README");
+          console.error("Error deleting file:", error);
+          this.notificationService.error(`Failed to delete ${this.getFileName()}`);
         },
       });
   }
 
-  private uploadReadmeContent(content: string, successMessage: string): void {
+  private uploadFileContent(content: string, successMessage: string): void {
     if (!this.did) return;
 
     this.datasetService
@@ -239,15 +270,22 @@ export class UserDatasetReadmeComponent implements OnInit, OnChanges {
         switchMap(dashboardDataset => {
           const datasetName = dashboardDataset.dataset.name;
 
-          const readmeBlob = new Blob([content], { type: "text/markdown" });
-          const readmeFile = new File([readmeBlob], this.README_FILE_PATH, { type: "text/markdown" });
+          const mimeType = this.getMimeType();
+          const fileBlob = new Blob([content], { type: mimeType });
+          const file = new File([fileBlob], this.filePath, { type: mimeType });
 
-          return this.datasetService.multipartUpload(datasetName, this.README_FILE_PATH, readmeFile);
+          return this.datasetService.multipartUpload(
+            datasetName,
+            this.filePath,
+            file,
+            this.chunkSizeMB * 1024 * 1024,
+            this.maxConcurrentChunks
+          );
         }),
         // After upload completes, automatically create a new version
         switchMap(progress => {
           if (progress.status === "finished") {
-            const versionMessage = successMessage.includes("created") ? "Created README.md" : "Updated README.md";
+            const versionMessage = successMessage.includes("created") ? `Created ${this.filePath}` : `Updated ${this.filePath}`;
             return this.datasetService.createDatasetVersion(this.did!, versionMessage);
           }
           return of(progress);
@@ -257,8 +295,8 @@ export class UserDatasetReadmeComponent implements OnInit, OnChanges {
       .subscribe({
         next: result => {
           if (result && typeof result === "object" && "dvid" in result) {
-            this.readmeExists = true;
-            this.readmeContent = content;
+            this.fileExists = true;
+            this.fileContent = content;
             this.isEditing = false;
             this.notificationService.success(successMessage);
 
@@ -267,9 +305,28 @@ export class UserDatasetReadmeComponent implements OnInit, OnChanges {
           }
         },
         error: (error: unknown) => {
-          console.error("Error uploading README:", error);
-          this.notificationService.error("Failed to save README");
+          console.error("Error uploading file:", error);
+          this.notificationService.error(`Failed to save ${this.getFileName()}`);
         },
       });
+  }
+
+  private getMimeType(): string {
+    switch (this.fileType) {
+      case 'markdown':
+        return 'text/markdown';
+      case 'text':
+        return 'text/plain';
+      default:
+        return 'text/plain';
+    }
+  }
+
+  public getFileName(): string {
+    return this.filePath.split('/').pop() || this.filePath;
+  }
+
+  public isEditable(): boolean {
+    return this.fileType === 'markdown' || this.fileType === 'text';
   }
 }

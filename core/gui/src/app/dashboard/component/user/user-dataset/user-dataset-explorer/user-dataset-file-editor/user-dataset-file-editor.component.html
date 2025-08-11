@@ -18,65 +18,61 @@
 -->
 
 <!-- Loading State -->
-<nz-card
-  *ngIf="isLoading"
-  class="readme-loading-card">
-  <nz-spin nzTip="Loading README...">
+<div *ngIf="isLoading" class="file-loading">
+  <nz-spin nzTip="Loading file...">
     <nz-alert
       nzType="info"
-      nzMessage="Loading README content"></nz-alert>
+      nzMessage="Loading file content"></nz-alert>
   </nz-spin>
-</nz-card>
+</div>
 
-<!-- No README State-->
-<nz-card
-  *ngIf="!isLoading && !readmeExists"
-  class="readme-empty-card">
+<!-- Unsupported File Type -->
+<div *ngIf="!isLoading && !isEditable() && fileExists" class="file-unsupported">
+  <nz-alert
+    nzType="info"
+    nzMessage="File Preview"
+    [nzDescription]="'This file type (' + fileType + ') is not editable in the browser. Please download to view or edit.'"
+    nzShowIcon>
+  </nz-alert>
+</div>
+
+<!-- No File State -->
+<div *ngIf="!isLoading && !fileExists && isEditable()" class="file-empty">
   <nz-empty
     nzNotFoundImage="simple"
     [nzNotFoundContent]="notFoundTemplate">
     <ng-template #notFoundTemplate>
-      <p>No README found</p>
-      <p>This dataset doesn't have a README yet.</p>
+      <p>No {{ getFileName() }} found</p>
+      <p>This file doesn't exist yet.</p>
       <button
         *ngIf="userHasWriteAccess"
         nz-button
         nzType="primary"
-        (click)="createReadme()">
-        <i
-          nz-icon
-          nzType="file-add"></i>
-        Create README
+        (click)="createFile()">
+        <i nz-icon nzType="file-add"></i>
+        Create {{ getFileName() }}
       </button>
     </ng-template>
   </nz-empty>
-</nz-card>
+</div>
 
-<!-- Show README content if it exists -->
-<nz-card
-  *ngIf="!isLoading && readmeExists"
-  class="readme-content-card">
-  <div class="readme-header">
-    <h4 class="readme-title">
-      <i
-        nz-icon
-        nzType="file-markdown"></i>
-      README.md
+<!-- Show file content if it exists and is editable -->
+<div *ngIf="!isLoading && fileExists && isEditable()" class="file-content">
+  <div class="file-header">
+    <h4 class="file-title">
+      <i nz-icon [nzType]="fileType === 'markdown' ? 'file-markdown' : 'file-text'"></i>
+      {{ getFileName() }}
     </h4>
 
-    <div
-      class="readme-controls"
-      *ngIf="userHasWriteAccess">
+    <div class="file-controls" *ngIf="userHasWriteAccess">
       <button
         *ngIf="!isEditing"
         nz-button
         nzType="text"
         nzSize="small"
-        nz-tooltip="Edit README"
+        nz-tooltip="Edit File"
         (click)="startEditing()">
-        <i
-          nz-icon
-          nzType="edit"></i>
+        <i nz-icon nzType="edit"></i>
       </button>
 
       <button
@@ -84,13 +80,11 @@
         nz-button
         nzType="text"
         nzSize="small"
-        nz-tooltip="Delete README"
+        nz-tooltip="Delete File"
         nz-popconfirm
-        nzPopconfirmTitle="Are you sure you want to delete this README?"
-        (nzOnConfirm)="deleteReadme()">
-        <i
-          nz-icon
-          nzType="delete"></i>
+        [nzPopconfirmTitle]="'Are you sure you want to delete ' + getFileName() + '?'"
+        (nzOnConfirm)="deleteFile()">
+        <i nz-icon nzType="delete"></i>
       </button>
 
       <nz-button-group *ngIf="isEditing">
@@ -98,10 +92,8 @@
           nz-button
           nzType="primary"
           nzSize="small"
-          (click)="saveReadme()">
-          <i
-            nz-icon
-            nzType="check"></i>
+          (click)="saveFile()">
+          <i nz-icon nzType="check"></i>
           Save
         </button>
         <button
@@ -109,33 +101,32 @@
           nzType="default"
           nzSize="small"
           (click)="cancelEditing()">
-          <i
-            nz-icon
-            nzType="close"></i>
+          <i nz-icon nzType="close"></i>
           Cancel
         </button>
       </nz-button-group>
     </div>
   </div>
 
-  <!-- README Content View Mode -->
-  <div
-    *ngIf="!isEditing"
-    class="readme-view">
-    <markdown [data]="readmeContent"></markdown>
+  <!-- File Content View Mode -->
+  <div *ngIf="!isEditing" class="file-view">
+    <markdown
+      *ngIf="fileType === 'markdown'"
+      [data]="fileContent">
+    </markdown>
+    <pre
+      *ngIf="fileType === 'text'"
+      class="text-content">{{ fileContent }}</pre>
   </div>
 
-  <!-- README Editor Mode with Split View -->
-  <div
-    *ngIf="isEditing"
-    class="readme-editor-container">
-    <div class="editor-split-view">
+  <!-- File Editor Mode -->
+  <div *ngIf="isEditing" class="file-editor-container">
+    <!-- Split view for markdown files -->
+    <div *ngIf="fileType === 'markdown'" class="editor-split-view">
       <!-- Left pane: text editor -->
       <div class="editor-pane">
         <h5 class="pane-title">
-          <i
-            nz-icon
-            nzType="edit"></i>
+          <i nz-icon nzType="edit"></i>
           Editor
         </h5>
 
@@ -146,27 +137,21 @@
             class="toolbar-btn"
             nz-tooltip="Bold"
             (click)="insertMarkdown('**', '**', 'bold text')">
-            <i
-              nz-icon
-              nzType="bold"></i>
+            <i nz-icon nzType="bold"></i>
           </button>
           <button
             type="button"
             class="toolbar-btn"
             nz-tooltip="Italic"
             (click)="insertMarkdown('_', '_', 'italic text')">
-            <i
-              nz-icon
-              nzType="italic"></i>
+            <i nz-icon nzType="italic"></i>
           </button>
           <button
             type="button"
             class="toolbar-btn"
             nz-tooltip="Strikethrough"
             (click)="insertMarkdown('~~', '~~', 'strikethrough text')">
-            <i
-              nz-icon
-              nzType="strikethrough"></i>
+            <i nz-icon nzType="strikethrough"></i>
           </button>
 
           <div class="toolbar-divider"></div>
@@ -183,27 +168,21 @@
             class="toolbar-btn"
             nz-tooltip="Quote"
             (click)="insertMarkdown('> ', '', 'Quote')">
-            <i
-              nz-icon
-              nzType="font-colors"></i>
+            <i nz-icon nzType="font-colors"></i>
           </button>
           <button
             type="button"
             class="toolbar-btn"
             nz-tooltip="Code"
             (click)="insertMarkdown('`', '`', 'code')">
-            <i
-              nz-icon
-              nzType="code"></i>
+            <i nz-icon nzType="code"></i>
           </button>
           <button
             type="button"
             class="toolbar-btn"
             nz-tooltip="Code Block"
             (click)="insertMarkdown('```\n', '\n```', 'code block')">
-            <i
-              nz-icon
-              nzType="file-text"></i>
+            <i nz-icon nzType="file-text"></i>
           </button>
 
           <div class="toolbar-divider"></div>
@@ -213,35 +192,29 @@
             class="toolbar-btn"
             nz-tooltip="Link"
             (click)="insertMarkdown('[text](', ')', 'linkUrl')">
-            <i
-              nz-icon
-              nzType="link"></i>
+            <i nz-icon nzType="link"></i>
           </button>
           <button
             type="button"
             class="toolbar-btn"
             nz-tooltip="Unordered List"
             (click)="insertMarkdown('- ', '', 'list item')">
-            <i
-              nz-icon
-              nzType="unordered-list"></i>
+            <i nz-icon nzType="unordered-list"></i>
           </button>
           <button
             type="button"
             class="toolbar-btn"
             nz-tooltip="Ordered List"
             (click)="insertMarkdown('1. ', '', 'list item')">
-            <i
-              nz-icon
-              nzType="ordered-list"></i>
+            <i nz-icon nzType="ordered-list"></i>
           </button>
         </div>
 
         <textarea
-          #markdownTextarea
+          #fileTextarea
           [(ngModel)]="editingContent"
-          class="markdown-textarea"
-          placeholder="Write your README in Markdown..."
+          class="file-textarea"
+          [placeholder]="'Write your ' + getFileName() + ' content here...'"
           spellcheck="false"
           (keydown)="onEditorKeydown($event)">
         </textarea>
@@ -252,9 +225,7 @@
       <!-- Right pane: markdown preview -->
       <div class="preview-pane">
         <h5 class="pane-title">
-          <i
-            nz-icon
-            nzType="eye"></i>
+          <i nz-icon nzType="eye"></i>
           Preview
         </h5>
         <div class="preview-content">
@@ -263,13 +234,24 @@
       </div>
     </div>
 
+    <!-- Simple editor for text files -->
+    <div *ngIf="fileType === 'text'" class="simple-editor">
+      <textarea
+        #fileTextarea
+        [(ngModel)]="editingContent"
+        class="file-textarea text-editor"
+        [placeholder]="'Edit ' + getFileName() + ' content...'"
+        spellcheck="false"
+        (keydown)="onEditorKeydown($event)">
+      </textarea>
+    </div>
+
     <div class="editor-help">
       <small>
-        <i
-          nz-icon
-          nzType="info-circle"></i>
-        You can use Markdown syntax. Changes will create a new dataset version.
+        <i nz-icon nzType="info-circle"></i>
+        <span *ngIf="fileType === 'markdown'">You can use Markdown syntax. </span>
+        Changes will create a new dataset version. Press Ctrl+S to save.
       </small>
     </div>
   </div>
-</nz-card>
+</div>

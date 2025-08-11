@@ -148,22 +148,6 @@
       </div>
     </nz-card>
 
-    <!-- README Section - appears above file content -->
-    <nz-card
-      *ngIf="currentDisplayedFileName !== 'README.md' && !currentDisplayedFileName.endsWith('/README.md')"
-      class="readme-section-card">
-      <texera-user-dataset-readme
-        [did]="did"
-        [dvid]="selectedVersion?.dvid"
-        [selectedVersion]="selectedVersion"
-        [datasetName]="datasetName"
-        [isMaximized]="isMaximized"
-        [userHasWriteAccess]="userDatasetAccessLevel === 'WRITE'"
-        [isLogin]="isLogin"
-        (userMakeChanges)="onReadmeChanged()">
-      </texera-user-dataset-readme>
-    </nz-card>
-
     <nz-empty
       class="empty-version-indicator"
       *ngIf="!selectedVersion"
@@ -179,6 +163,22 @@
       [isLogin]="isLogin"
       class="file-renderer">
     </texera-user-dataset-file-renderer>
+
+    <!-- Use file editor for editable files -->
+    <texera-user-dataset-file-editor
+      *ngIf="selectedVersion && isEditableFile(currentDisplayedFileName)"
+      [did]="did"
+      [dvid]="selectedVersion?.dvid"
+      [selectedVersion]="selectedVersion"
+      [datasetName]="datasetName"
+      [filePath]="currentDisplayedFileName"
+      [isMaximized]="isMaximized"
+      [userHasWriteAccess]="userDatasetAccessLevel === 'WRITE'"
+      [isLogin]="isLogin"
+      [chunkSizeMB]="chunkSizeMB"
+      [maxConcurrentChunks]="maxConcurrentChunks"
+      (userMakeChanges)="onFileChanged()">
+    </texera-user-dataset-file-editor>
   </nz-content>
   <nz-sider
     *ngIf="!isRightBarCollapsed"
@@ -241,6 +241,54 @@
               Version Size: {{ formatSize(currentDatasetVersionSize) }}
             </div>
           </div>
+
+          <!-- Simple README creation in sidebar -->
+          <div *ngIf="userDatasetAccessLevel === 'WRITE' && !hasReadmeFile()" class="create-readme-section">
+            <button
+              nz-button
+              nzType="dashed"
+              nzBlock
+              nzSize="small"
+              (click)="showQuickReadmeForm = !showQuickReadmeForm">
+              <i nz-icon nzType="file-add"></i>
+              {{ showQuickReadmeForm ? 'Cancel' : 'Quick README' }}
+            </button>
+
+            <!-- Quick creation form -->
+            <div *ngIf="showQuickReadmeForm" style="margin-top: 8px; padding: 8px; background: #fafafa; border-radius: 4px;">
+              <textarea
+                nz-input
+                [(ngModel)]="quickReadmeContent"
+                [nzAutosize]="{ minRows: 3, maxRows: 6 }"
+                placeholder="# Dataset README&#10;&#10;Describe your dataset here...">
+              </textarea>
+              <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+                <button
+                  nz-button
+                  nzType="primary"
+                  nzSize="small"
+                  (click)="onClickCreateReadme()"
+                  [nzLoading]="isCreatingReadme"
+                  [disabled]="!quickReadmeContent.trim()">
+                  Create
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit README button if it exists -->
+          <div *ngIf="userDatasetAccessLevel === 'WRITE' && hasReadmeFile()" style="margin-bottom: 8px;">
+            <button
+              nz-button
+              nzType="text"
+              nzSize="small"
+              nz-tooltip="Edit README"
+              (click)="onClickOpenReadmeEditor()">
+              <i nz-icon nzType="edit"></i>
+              Edit README
+            </button>
+          </div>
+
           <texera-user-dataset-version-filetree
             [fileTreeNodes]="fileTreeNodeList"
             [isTreeNodeDeletable]="true"
