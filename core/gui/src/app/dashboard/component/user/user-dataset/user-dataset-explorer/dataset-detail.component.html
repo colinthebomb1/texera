@@ -153,17 +153,6 @@
       *ngIf="!selectedVersion"
       nzNotFoundContent="No version is selected"></nz-empty>
 
-    <texera-user-dataset-file-renderer
-      *ngIf="selectedVersion"
-      [isMaximized]="isMaximized"
-      [did]="did"
-      [dvid]="selectedVersion?.dvid"
-      [filePath]="currentDisplayedFileName"
-      [fileSize]="currentFileSize"
-      [isLogin]="isLogin"
-      class="file-renderer">
-    </texera-user-dataset-file-renderer>
-
     <!-- Use file editor for editable files -->
     <texera-user-dataset-file-editor
       *ngIf="selectedVersion && isEditableFile(currentDisplayedFileName)"
@@ -179,6 +168,17 @@
       [maxConcurrentChunks]="maxConcurrentChunks"
       (userMakeChanges)="onFileChanged()">
     </texera-user-dataset-file-editor>
+
+    <texera-user-dataset-file-renderer
+      *ngIf="selectedVersion"
+      [isMaximized]="isMaximized"
+      [did]="did"
+      [dvid]="selectedVersion?.dvid"
+      [filePath]="currentDisplayedFileName"
+      [fileSize]="currentFileSize"
+      [isLogin]="isLogin"
+      class="file-renderer">
+    </texera-user-dataset-file-renderer>
   </nz-content>
   <nz-sider
     *ngIf="!isRightBarCollapsed"

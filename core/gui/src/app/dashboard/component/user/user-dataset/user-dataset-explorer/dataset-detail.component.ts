@@ -214,18 +214,66 @@ export class DatasetDetailComponent implements OnInit {
   public onFileChanged(): void {
     this.userMakeChanges.emit();
 
+    // Get the current filename to re-select after refresh
+    const currentFileName = this.getFileName(this.currentDisplayedFileName);
+
     this.retrieveDatasetVersionList();
 
-    if (this.selectedVersion) {
-      // Small delay to ensure the new version is available
-      setTimeout(() => {
-        // Re-select the latest version (which should be the new one we just created)
-        if (this.versions.length > 0) {
-          this.selectedVersion = this.versions[0];
-          this.onVersionSelected(this.selectedVersion);
+    // Wait a bit for the version list to update, then refresh the current version
+    setTimeout(() => {
+      if (this.versions.length > 0) {
+        // Select the latest version (newly created)
+        this.selectedVersion = this.versions[0];
+
+        // Refresh the file tree for the new version
+        if (this.did && this.selectedVersion.dvid) {
+          this.datasetService
+            .retrieveDatasetVersionFileTree(this.did, this.selectedVersion.dvid, this.isLogin)
+            .pipe(untilDestroyed(this))
+            .subscribe(data => {
+              this.fileTreeNodeList = data.fileNodes;
+              this.currentDatasetVersionSize = data.size;
+
+              // Try to find and re-select the same file we were editing
+              const fileNode = this.findFileInTree(currentFileName);
+              if (fileNode) {
+                this.loadFileContent(fileNode);
+              } else {
+                // Fallback to first file if our file isn't found
+                let currentNode = this.fileTreeNodeList[0];
+                while (currentNode && currentNode.type === "directory" && currentNode.children) {
+                  currentNode = currentNode.children[0];
+                }
+                if (currentNode) {
+                  this.loadFileContent(currentNode);
+                }
+              }
+            });
         }
-      }, 0);
+      }
+    }, 500); // Small delay to ensure backend has processed the new version
+  }
+
+  // Helper method to extract filename from full path
+  private getFileName(fullPath: string): string {
+    if (!fullPath) return '';
+    return fullPath.split('/').pop() || fullPath;
+  }
+
+  // Update your existing findFileInTree to be more robust
+  private findFileInTree(fileName: string, nodes: DatasetFileNode[] = this.fileTreeNodeList): DatasetFileNode | null {
+    for (const node of nodes) {
+      if (node.name === fileName && node.type === "file") {
+        return node;
+      }
+      if (node.children) {
+        const found = this.findFileInTree(fileName, node.children);
+        if (found) {
+          return found;
+        }
+      }
     }
+    return null;
   }
 
   public onClickOpenReadmeEditor(): void {
@@ -285,24 +333,9 @@ export class DatasetDetailComponent implements OnInit {
     return this.findFileInTree("README.md") !== null;
   }
 
-  private findFileInTree(fileName: string, nodes: DatasetFileNode[] = this.fileTreeNodeList): DatasetFileNode | null {
-    for (const node of nodes) {
-      if (node.name === fileName && node.type === "file") {
-        return node;
-      }
-      if (node.children) {
-        const found = this.findFileInTree(fileName, node.children);
-        if (found) {
-          return found;
-        }
-      }
-    }
-    return null;
-  }
-
   public isEditableFile(fileName: string): boolean {
     const extension = fileName.toLowerCase().split('.').pop();
-    const editableExtensions = ['md', 'markdown', 'txt', 'log', 'json', 'xml', 'csv', 'yml', 'yaml'];
+    const editableExtensions = ['md', 'markdown', 'txt', 'log', 'yml', 'yaml'];
     return editableExtensions.includes(extension || '');
   }
 

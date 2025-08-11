@@ -82,6 +82,12 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
       this.selectedVersion &&
       this.filePath
     ) {
+      // Reset loading states when inputs change
+      this.isLoading = false;
+      this.fileExists = false;
+      this.fileContent = "";
+      this.editingContent = "";
+
       this.determineFileType();
       this.loadFile();
     }
@@ -107,12 +113,25 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
     }
   }
 
+
   private loadFile(): void {
     if (!this.did || !this.dvid || !this.datasetName || !this.selectedVersion || !this.filePath) return;
 
     this.isLoading = true;
 
-    const fullPath = `/texera/${this.datasetName}/${this.selectedVersion.name}/${this.filePath}`;
+    // The filePath is already the relative path from the dataset version root
+    // We should NOT construct a new path, just use it directly
+    let fullPath: string;
+
+    if (this.filePath.startsWith('/texera/')) {
+      // If filePath already contains the full path, use it as-is
+      fullPath = this.filePath;
+    } else {
+      // If it's just a relative path, construct the full path
+      fullPath = `/texera/${this.datasetName}/${this.selectedVersion.name}/${this.filePath}`;
+    }
+
+    console.log('Loading file with path:', fullPath); // Debug log
 
     this.datasetService
       .retrieveDatasetVersionSingleFile(fullPath, this.isLogin)
@@ -269,23 +288,28 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
       .pipe(
         switchMap(dashboardDataset => {
           const datasetName = dashboardDataset.dataset.name;
+          const fileName = this.getFileName();
 
           const mimeType = this.getMimeType();
           const fileBlob = new Blob([content], { type: mimeType });
-          const file = new File([fileBlob], this.filePath, { type: mimeType });
+          const file = new File([fileBlob], fileName, { type: mimeType });
 
           return this.datasetService.multipartUpload(
             datasetName,
-            this.filePath,
+            fileName,
             file,
-            this.chunkSizeMB * 1024 * 1024,
-            this.maxConcurrentChunks
+            50 * 1024 * 1024,
+            10
           );
         }),
-        // After upload completes, automatically create a new version
         switchMap(progress => {
           if (progress.status === "finished") {
-            const versionMessage = successMessage.includes("created") ? `Created ${this.filePath}` : `Updated ${this.filePath}`;
+            // Fix: Use only the filename, not the full path
+            const fileName = this.getFileName();
+            const versionMessage = successMessage.includes("created")
+              ? `Created ${fileName}`
+              : `Updated ${fileName}`;
+
             return this.datasetService.createDatasetVersion(this.did!, versionMessage);
           }
           return of(progress);
@@ -299,8 +323,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
             this.fileContent = content;
             this.isEditing = false;
             this.notificationService.success(successMessage);
-
-            // Emit the change to refresh file version screen
             this.userMakeChanges.emit();
           }
         },
@@ -323,6 +345,8 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   }
 
   public getFileName(): string {
+    if (!this.filePath) return '';
+
     return this.filePath.split('/').pop() || this.filePath;
   }
 
