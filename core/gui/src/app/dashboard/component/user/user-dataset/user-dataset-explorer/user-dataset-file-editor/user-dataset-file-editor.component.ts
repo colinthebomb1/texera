@@ -1,3 +1,4 @@
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -61,6 +62,7 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   public isLoading: boolean = false;
   public editingContent: string = "";
   public fileType: 'markdown' | 'text' | 'unsupported' = 'unsupported';
+  public showFileContent: boolean = false; // Add this for expand/collapse
 
   constructor(
     private datasetService: DatasetService,
@@ -82,7 +84,9 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
       this.selectedVersion &&
       this.filePath
     ) {
-      // Reset loading states when inputs change
+      // Reset editing states when switching files
+      this.isEditing = false;
+      this.showFileContent = false;
       this.isLoading = false;
       this.fileExists = false;
       this.fileContent = "";
@@ -102,8 +106,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
         break;
       case 'txt':
       case 'log':
-      case 'json':
-      case 'xml':
       case 'yml':
       case 'yaml':
         this.fileType = 'text';
@@ -185,6 +187,10 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   public cancelEditing(): void {
     this.editingContent = this.fileContent;
     this.isEditing = false;
+  }
+
+  public expandFile(): void {
+    this.startEditing();
   }
 
   public onEditorKeydown(event: KeyboardEvent): void {

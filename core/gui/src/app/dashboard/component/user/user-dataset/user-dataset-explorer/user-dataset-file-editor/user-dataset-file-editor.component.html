@@ -58,200 +58,203 @@
 
 <!-- Show file content if it exists and is editable -->
 <div *ngIf="!isLoading && fileExists && isEditable()" class="file-content">
-  <div class="file-header">
-    <h4 class="file-title">
-      <i nz-icon [nzType]="fileType === 'markdown' ? 'file-markdown' : 'file-text'"></i>
-      {{ getFileName() }}
-    </h4>
 
-    <div class="file-controls" *ngIf="userHasWriteAccess">
-      <button
-        *ngIf="!isEditing"
-        nz-button
-        nzType="text"
-        nzSize="small"
-        nz-tooltip="Edit File"
-        (click)="startEditing()">
-        <i nz-icon nzType="edit"></i>
-      </button>
-
-      <button
-        *ngIf="!isEditing"
-        nz-button
-        nzType="text"
-        nzSize="small"
-        nz-tooltip="Delete File"
-        nz-popconfirm
-        [nzPopconfirmTitle]="'Are you sure you want to delete ' + getFileName() + '?'"
-        (nzOnConfirm)="deleteFile()">
-        <i nz-icon nzType="delete"></i>
-      </button>
-
-      <nz-button-group *ngIf="isEditing">
+  <!-- Collapsed State: Just show edit button -->
+  <div *ngIf="!isEditing && !showFileContent" class="file-collapsed">
+    <div class="file-header-collapsed">
+      <span class="file-title-small">
+        <i nz-icon [nzType]="fileType === 'markdown' ? 'file-markdown' : 'file-text'"></i>
+        {{ getFileName() }}
+      </span>
+      <div class="file-actions">
         <button
+          *ngIf="userHasWriteAccess"
           nz-button
           nzType="primary"
           nzSize="small"
-          (click)="saveFile()">
-          <i nz-icon nzType="check"></i>
-          Save
+          (click)="expandFile()">
+          <i nz-icon nzType="edit"></i>
+          Edit {{ getFileName() }}
         </button>
-        <button
-          nz-button
-          nzType="default"
-          nzSize="small"
-          (click)="cancelEditing()">
-          <i nz-icon nzType="close"></i>
-          Cancel
-        </button>
-      </nz-button-group>
+      </div>
     </div>
   </div>
 
-  <!-- File Content View Mode -->
-  <div *ngIf="!isEditing" class="file-view">
-    <markdown
-      *ngIf="fileType === 'markdown'"
-      [data]="fileContent">
-    </markdown>
-    <pre
-      *ngIf="fileType === 'text'"
-      class="text-content">{{ fileContent }}</pre>
-  </div>
+  <!-- Expanded State: Show full content -->
+  <div *ngIf="isEditing" class="file-expanded">
+    <div class="file-header">
+      <h4 class="file-title">
+        <i nz-icon [nzType]="fileType === 'markdown' ? 'file-markdown' : 'file-text'"></i>
+        {{ getFileName() }}
+      </h4>
 
-  <!-- File Editor Mode -->
-  <div *ngIf="isEditing" class="file-editor-container">
-    <!-- Split view for markdown files -->
-    <div *ngIf="fileType === 'markdown'" class="editor-split-view">
-      <!-- Left pane: text editor -->
-      <div class="editor-pane">
-        <h5 class="pane-title">
-          <i nz-icon nzType="edit"></i>
-          Editor
-        </h5>
+      <div class="file-controls">
+        <nz-button-group>
+          <button
+            nz-button
+            nzType="primary"
+            nzSize="small"
+            (click)="saveFile()">
+            <i nz-icon nzType="check"></i>
+            Save
+          </button>
+          <button
+            nz-button
+            nzType="default"
+            nzSize="small"
+            (click)="cancelEditing()">
+            <i nz-icon nzType="close"></i>
+            Cancel
+          </button>
+        </nz-button-group>
+      </div>
+    </div>
 
-        <!-- Markdown Toolbar -->
-        <div class="markdown-toolbar">
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Bold"
-            (click)="insertMarkdown('**', '**', 'bold text')">
-            <i nz-icon nzType="bold"></i>
-          </button>
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Italic"
-            (click)="insertMarkdown('_', '_', 'italic text')">
-            <i nz-icon nzType="italic"></i>
-          </button>
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Strikethrough"
-            (click)="insertMarkdown('~~', '~~', 'strikethrough text')">
-            <i nz-icon nzType="strikethrough"></i>
-          </button>
+    <!-- File Content View Mode -->
+    <div *ngIf="!isEditing" class="file-view">
+      <markdown
+        *ngIf="fileType === 'markdown'"
+        [data]="fileContent">
+      </markdown>
+      <pre
+        *ngIf="fileType === 'text'"
+        class="text-content">{{ fileContent }}</pre>
+    </div>
 
-          <div class="toolbar-divider"></div>
+    <!-- File Editor Mode -->
+    <div *ngIf="isEditing" class="file-editor-container">
+      <!-- Split view for markdown files -->
+      <div *ngIf="fileType === 'markdown'" class="editor-split-view">
+        <!-- Left pane: text editor -->
+        <div class="editor-pane">
+          <h5 class="pane-title">
+            <i nz-icon nzType="edit"></i>
+            Editor
+          </h5>
 
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Heading"
-            (click)="insertMarkdown('## ', '', 'Heading')">
-            <span class="toolbar-text">H</span>
-          </button>
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Quote"
-            (click)="insertMarkdown('> ', '', 'Quote')">
-            <i nz-icon nzType="font-colors"></i>
-          </button>
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Code"
-            (click)="insertMarkdown('`', '`', 'code')">
-            <i nz-icon nzType="code"></i>
-          </button>
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Code Block"
-            (click)="insertMarkdown('```\n', '\n```', 'code block')">
-            <i nz-icon nzType="file-text"></i>
-          </button>
+          <!-- Markdown Toolbar -->
+          <div class="markdown-toolbar">
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Bold"
+              (click)="insertMarkdown('**', '**', 'bold text')">
+              <i nz-icon nzType="bold"></i>
+            </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Italic"
+              (click)="insertMarkdown('_', '_', 'italic text')">
+              <i nz-icon nzType="italic"></i>
+            </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Strikethrough"
+              (click)="insertMarkdown('~~', '~~', 'strikethrough text')">
+              <i nz-icon nzType="strikethrough"></i>
+            </button>
 
-          <div class="toolbar-divider"></div>
+            <div class="toolbar-divider"></div>
 
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Link"
-            (click)="insertMarkdown('[text](', ')', 'linkUrl')">
-            <i nz-icon nzType="link"></i>
-          </button>
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Unordered List"
-            (click)="insertMarkdown('- ', '', 'list item')">
-            <i nz-icon nzType="unordered-list"></i>
-          </button>
-          <button
-            type="button"
-            class="toolbar-btn"
-            nz-tooltip="Ordered List"
-            (click)="insertMarkdown('1. ', '', 'list item')">
-            <i nz-icon nzType="ordered-list"></i>
-          </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Heading"
+              (click)="insertMarkdown('## ', '', 'Heading')">
+              <span class="toolbar-text">H</span>
+            </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Quote"
+              (click)="insertMarkdown('> ', '', 'Quote')">
+              <i nz-icon nzType="font-colors"></i>
+            </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Code"
+              (click)="insertMarkdown('`', '`', 'code')">
+              <i nz-icon nzType="code"></i>
+            </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Code Block"
+              (click)="insertMarkdown('```\n', '\n```', 'code block')">
+              <i nz-icon nzType="file-text"></i>
+            </button>
+
+            <div class="toolbar-divider"></div>
+
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Link"
+              (click)="insertMarkdown('[text](', ')', 'linkUrl')">
+              <i nz-icon nzType="link"></i>
+            </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Unordered List"
+              (click)="insertMarkdown('- ', '', 'list item')">
+              <i nz-icon nzType="unordered-list"></i>
+            </button>
+            <button
+              type="button"
+              class="toolbar-btn"
+              nz-tooltip="Ordered List"
+              (click)="insertMarkdown('1. ', '', 'list item')">
+              <i nz-icon nzType="ordered-list"></i>
+            </button>
+          </div>
+
+          <textarea
+            #fileTextarea
+            [(ngModel)]="editingContent"
+            class="file-textarea"
+            [placeholder]="'Write your ' + getFileName() + ' content here...'"
+            spellcheck="false"
+            (keydown)="onEditorKeydown($event)">
+          </textarea>
         </div>
 
+        <div class="editor-divider"></div>
+
+        <!-- Right pane: markdown preview -->
+        <div class="preview-pane">
+          <h5 class="pane-title">
+            <i nz-icon nzType="eye"></i>
+            Preview
+          </h5>
+          <div class="preview-content">
+            <markdown [data]="editingContent"></markdown>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simple editor for text files -->
+      <div *ngIf="fileType === 'text'" class="simple-editor">
         <textarea
           #fileTextarea
           [(ngModel)]="editingContent"
-          class="file-textarea"
-          [placeholder]="'Write your ' + getFileName() + ' content here...'"
+          class="file-textarea text-editor"
+          [placeholder]="'Edit ' + getFileName() + ' content...'"
           spellcheck="false"
           (keydown)="onEditorKeydown($event)">
         </textarea>
       </div>
 
-      <div class="editor-divider"></div>
-
-      <!-- Right pane: markdown preview -->
-      <div class="preview-pane">
-        <h5 class="pane-title">
-          <i nz-icon nzType="eye"></i>
-          Preview
-        </h5>
-        <div class="preview-content">
-          <markdown [data]="editingContent"></markdown>
-        </div>
+      <div class="editor-help">
+        <small>
+          <i nz-icon nzType="info-circle"></i>
+          <span *ngIf="fileType === 'markdown'">You can use Markdown syntax. </span>
+          Changes will create a new dataset version. Press Ctrl+S to save.
+        </small>
       </div>
-    </div>
-
-    <!-- Simple editor for text files -->
-    <div *ngIf="fileType === 'text'" class="simple-editor">
-      <textarea
-        #fileTextarea
-        [(ngModel)]="editingContent"
-        class="file-textarea text-editor"
-        [placeholder]="'Edit ' + getFileName() + ' content...'"
-        spellcheck="false"
-        (keydown)="onEditorKeydown($event)">
-      </textarea>
-    </div>
-
-    <div class="editor-help">
-      <small>
-        <i nz-icon nzType="info-circle"></i>
-        <span *ngIf="fileType === 'markdown'">You can use Markdown syntax. </span>
-        Changes will create a new dataset version. Press Ctrl+S to save.
-      </small>
     </div>
   </div>
 </div>
