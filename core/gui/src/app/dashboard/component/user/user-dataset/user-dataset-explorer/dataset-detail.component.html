@@ -249,18 +249,18 @@
               nzType="dashed"
               nzBlock
               nzSize="small"
-              (click)="showQuickReadmeForm = !showQuickReadmeForm">
+              (click)="showReadmeForm = !showReadmeForm">
               <i nz-icon nzType="file-add"></i>
-              {{ showQuickReadmeForm ? 'Cancel' : 'Quick README' }}
+              {{ showReadmeForm ? 'Cancel' : 'Create README.md' }}
             </button>
 
-            <!-- Quick creation form -->
-            <div *ngIf="showQuickReadmeForm" style="margin-top: 8px; padding: 8px; background: #fafafa; border-radius: 4px;">
+            <!-- README creation form -->
+            <div *ngIf="showReadmeForm">
               <textarea
                 nz-input
-                [(ngModel)]="quickReadmeContent"
+                [(ngModel)]="readmeContent"
                 [nzAutosize]="{ minRows: 3, maxRows: 6 }"
-                placeholder="# Dataset README&#10;&#10;Describe your dataset here...">
+                placeholder="## Dataset README&#10;&#10;Describe your dataset here...">
               </textarea>
               <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
                 <button
@@ -269,24 +269,11 @@
                   nzSize="small"
                   (click)="onClickCreateReadme()"
                   [nzLoading]="isCreatingReadme"
-                  [disabled]="!quickReadmeContent.trim()">
+                  [disabled]="!readmeContent.trim()">
                   Create
                 </button>
               </div>
             </div>
-          </div>
-
-          <!-- Edit README button if it exists -->
-          <div *ngIf="userDatasetAccessLevel === 'WRITE' && hasReadmeFile()" style="margin-bottom: 8px;">
-            <button
-              nz-button
-              nzType="text"
-              nzSize="small"
-              nz-tooltip="Edit README"
-              (click)="onClickOpenReadmeEditor()">
-              <i nz-icon nzType="edit"></i>
-              Edit README
-            </button>
           </div>
 
           <texera-user-dataset-version-filetree

@@ -82,9 +82,9 @@ export class DatasetDetailComponent implements OnInit {
   chunkSizeMB: number = 50;
   maxConcurrentChunks: number = 10;
 
-  // Quick README creation
-  showQuickReadmeForm: boolean = false;
-  quickReadmeContent: string = "# Dataset README\n\nDescribe your dataset here...";
+  // README creation
+  showReadmeForm: boolean = false;
+  readmeContent: string = "# Dataset README\n\nDescribe your dataset here...";
   isCreatingReadme: boolean = false;
 
   //  List of upload tasks – each task tracked by its filePath
@@ -215,7 +215,7 @@ export class DatasetDetailComponent implements OnInit {
     this.userMakeChanges.emit();
 
     // Get the current filename to re-select after refresh
-    const currentFileName = this.getFileName(this.currentDisplayedFileName);
+    const currentFileName = this.currentDisplayedFileName;
 
     this.retrieveDatasetVersionList();
 
@@ -254,13 +254,6 @@ export class DatasetDetailComponent implements OnInit {
     }, 500); // Small delay to ensure backend has processed the new version
   }
 
-  // Helper method to extract filename from full path
-  private getFileName(fullPath: string): string {
-    if (!fullPath) return '';
-    return fullPath.split('/').pop() || fullPath;
-  }
-
-  // Update your existing findFileInTree to be more robust
   private findFileInTree(fileName: string, nodes: DatasetFileNode[] = this.fileTreeNodeList): DatasetFileNode | null {
     for (const node of nodes) {
       if (node.name === fileName && node.type === "file") {
@@ -277,7 +270,6 @@ export class DatasetDetailComponent implements OnInit {
   }
 
   public onClickOpenReadmeEditor(): void {
-    // Find README in file tree and open it
     const readmeNode = this.findFileInTree("README.md");
     if (readmeNode) {
       this.loadFileContent(readmeNode);
@@ -285,7 +277,7 @@ export class DatasetDetailComponent implements OnInit {
   }
 
   public onClickCreateReadme(): void {
-    if (!this.did || !this.quickReadmeContent.trim()) return;
+    if (!this.did || !this.readmeContent.trim()) return;
 
     this.isCreatingReadme = true;
 
@@ -294,7 +286,7 @@ export class DatasetDetailComponent implements OnInit {
       .pipe(
         switchMap(dashboardDataset => {
           const datasetName = dashboardDataset.dataset.name;
-          const readmeBlob = new Blob([this.quickReadmeContent], { type: "text/markdown" });
+          const readmeBlob = new Blob([this.readmeContent], { type: "text/markdown" });
           const readmeFile = new File([readmeBlob], "README.md", { type: "text/markdown" });
           return this.datasetService.multipartUpload(
             datasetName,
@@ -316,7 +308,7 @@ export class DatasetDetailComponent implements OnInit {
         next: result => {
           if (result && typeof result === "object" && "dvid" in result) {
             this.isCreatingReadme = false;
-            this.showQuickReadmeForm = false;
+            this.showReadmeForm = false;
             this.notificationService.success("README created successfully!");
             this.onFileChanged();
           }

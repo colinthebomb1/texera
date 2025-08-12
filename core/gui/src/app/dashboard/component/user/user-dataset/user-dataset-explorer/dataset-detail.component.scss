@@ -18,19 +18,19 @@
  */
 
 .create-dataset-version-button {
-  display: flex; /* Use flexbox for centering */
-  align-items: center; /* Center vertically */
-  justify-content: center; /* Center horizontally */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
   border: none;
-  padding: 12px 40px; /* Increase padding for a wider button */
+  padding: 12px 40px;
   border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin: 50px auto 0 auto; /* Auto margins for horizontal centering */
-  width: 200px; /* Adjust width as needed */
-  font-size: 18px; /* Make text slightly bigger */
-  font-weight: bold; /* Optional: Make text bold */
+  margin: 50px auto 0 auto;
+  width: 200px;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .version-storage {
@@ -42,7 +42,7 @@
 }
 
 .version-storage nz-select {
-  width: 100%; /* Make the select element take the full width of its parent */
+  width: 100%;
 }
 
 .right-panel-title {
@@ -90,7 +90,7 @@ body {
 
 .grayed-out {
   filter: grayscale(1) opacity(0.7);
-  background-color: #f0f0f0; /* Adjust the color as needed */
+  background-color: #f0f0f0;
 }
 
 .disabled-click {
@@ -173,4 +173,41 @@ nz-select {
 
 .upload-progress-container {
   margin-left: 20px;
+}
+
+.create-readme-section {
+  margin-bottom: 8px;
+
+  .quick-readme-form {
+    margin-top: 8px;
+    padding: 8px;
+    background: #fafafa;
+    border-radius: 4px;
+
+    .quick-actions {
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+
+  button[nzType="dashed"] {
+    border-color: #1890ff;
+    color: #1890ff;
+
+    &:hover {
+      border-color: #40a9ff;
+      color: #40a9ff;
+      background-color: #f0f8ff;
+    }
+
+    &:focus {
+      border-color: #40a9ff;
+      color: #40a9ff;
+    }
+  }
+}
+
+.edit-readme-section {
+  margin-bottom: 8px;
 }
