@@ -361,37 +361,3 @@
     }
   }
 }
-
-// Responsive design
-@media (max-width: 768px) {
-  .file-content .file-editor-container .editor-split-view {
-    flex-direction: column;
-    height: auto;
-
-    .editor-pane,
-    .preview-pane {
-      min-height: 250px;
-    }
-
-    .editor-divider {
-      width: 100%;
-      height: 1px;
-      margin: 0;
-    }
-
-    .preview-content {
-      border-left: none;
-      border-top: 1px solid #e8e8e8;
-    }
-  }
-
-  .file-content .file-collapsed .file-header-collapsed {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-
-    .file-actions {
-      justify-content: center;
-    }
-  }
-}

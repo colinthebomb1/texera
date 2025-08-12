@@ -26,36 +26,6 @@
   </nz-spin>
 </div>
 
-<!-- Unsupported File Type -->
-<div *ngIf="!isLoading && !isEditable() && fileExists" class="file-unsupported">
-  <nz-alert
-    nzType="info"
-    nzMessage="File Preview"
-    [nzDescription]="'This file type (' + fileType + ') is not editable in the browser. Please download to view or edit.'"
-    nzShowIcon>
-  </nz-alert>
-</div>
-
-<!-- No File State -->
-<div *ngIf="!isLoading && !fileExists && isEditable()" class="file-empty">
-  <nz-empty
-    nzNotFoundImage="simple"
-    [nzNotFoundContent]="notFoundTemplate">
-    <ng-template #notFoundTemplate>
-      <p>No {{ getFileName() }} found</p>
-      <p>This file doesn't exist yet.</p>
-      <button
-        *ngIf="userHasWriteAccess"
-        nz-button
-        nzType="primary"
-        (click)="createFile()">
-        <i nz-icon nzType="file-add"></i>
-        Create {{ getFileName() }}
-      </button>
-    </ng-template>
-  </nz-empty>
-</div>
-
 <!-- Show file content if it exists and is editable -->
 <div *ngIf="!isLoading && fileExists && isEditable()" class="file-content">
 

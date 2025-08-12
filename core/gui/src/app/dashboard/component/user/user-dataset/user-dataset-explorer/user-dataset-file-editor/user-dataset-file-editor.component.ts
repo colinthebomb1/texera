@@ -62,8 +62,7 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   public isLoading: boolean = false;
   public editingContent: string = "";
   public fileType: 'markdown' | 'text' | 'unsupported' = 'unsupported';
-  public showFileContent: boolean = false; // Add this for expand/collapse
-
+  public showFileContent: boolean = false;
   constructor(
     private datasetService: DatasetService,
     private notificationService: NotificationService
@@ -84,7 +83,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
       this.selectedVersion &&
       this.filePath
     ) {
-      // Reset editing states when switching files
       this.isEditing = false;
       this.showFileContent = false;
       this.isLoading = false;
@@ -121,22 +119,8 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
 
     this.isLoading = true;
 
-    // The filePath is already the relative path from the dataset version root
-    // We should NOT construct a new path, just use it directly
-    let fullPath: string;
-
-    if (this.filePath.startsWith('/texera/')) {
-      // If filePath already contains the full path, use it as-is
-      fullPath = this.filePath;
-    } else {
-      // If it's just a relative path, construct the full path
-      fullPath = `/texera/${this.datasetName}/${this.selectedVersion.name}/${this.filePath}`;
-    }
-
-    console.log('Loading file with path:', fullPath); // Debug log
-
     this.datasetService
-      .retrieveDatasetVersionSingleFile(fullPath, this.isLogin)
+      .retrieveDatasetVersionSingleFile(this.filePath, this.isLogin)
       .pipe(
         switchMap(blob => {
           return new Promise<string>((resolve, reject) => {
@@ -163,19 +147,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
           console.log("File not found or error loading");
         },
       });
-  }
-
-  public createFile(): void {
-    if (!this.did || !this.userHasWriteAccess) return;
-
-    let initialContent = "";
-    if (this.fileType === 'markdown') {
-      initialContent = `# ${this.getFileName()}\n\nAdd your content here...`;
-    } else {
-      initialContent = "Add your content here...";
-    }
-
-    this.uploadFileContent(initialContent, `${this.getFileName()} created successfully`);
   }
 
   public startEditing(): void {
@@ -256,34 +227,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
     }
 
     this.uploadFileContent(this.editingContent, `${this.getFileName()} updated successfully`);
-  }
-
-  public deleteFile(): void {
-    if (!this.did || !this.userHasWriteAccess) return;
-
-    this.datasetService
-      .deleteDatasetFile(this.did, this.filePath)
-      .pipe(
-        // After deleting, create a new version to save changes.
-        switchMap(() => this.datasetService.createDatasetVersion(this.did!, `Deleted ${this.filePath}`)),
-        untilDestroyed(this)
-      )
-      .subscribe({
-        next: () => {
-          this.fileExists = false;
-          this.fileContent = "";
-          this.editingContent = "";
-          this.isEditing = false;
-          this.notificationService.success(`${this.getFileName()} deleted successfully`);
-
-          // Emit the change to refresh file version screen
-          this.userMakeChanges.emit();
-        },
-        error: (error: unknown) => {
-          console.error("Error deleting file:", error);
-          this.notificationService.error(`Failed to delete ${this.getFileName()}`);
-        },
-      });
   }
 
   private uploadFileContent(content: string, successMessage: string): void {
