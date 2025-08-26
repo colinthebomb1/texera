@@ -17,347 +17,83 @@
  * under the License.
  */
 
-.file-loading,
-.file-unsupported,
-.file-empty {
+.file-loading {
   padding: 16px;
   text-align: center;
 }
 
 .file-content {
-  // Collapsed state - minimal appearance
-  .file-collapsed {
-    .file-header-collapsed {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: #f8f9fa;
-      border: 1px solid #e8e8e8;
-      border-radius: 6px;
-      transition: all 0.3s ease;
+  /* Container for file editing interface */
+}
 
-      &:hover {
-        background: #f0f0f0;
-        border-color: #d9d9d9;
-      }
+.file-expanded {
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
-      .file-title-small {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        color: #595959;
+.file-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+  border-radius: 6px 6px 0 0;
+}
 
-        i {
-          color: #1890ff;
-        }
-      }
+.file-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+}
 
-      .file-actions {
-        display: flex;
-        gap: 8px;
-      }
-    }
-  }
+.file-title i {
+  color: #1890ff;
+}
 
-  // Expanded state - full editor
-  .file-expanded {
-    border: 1px solid #e8e8e8;
-    border-radius: 6px;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
+.file-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
-  .file-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
-    background: #fafafa;
-    border-radius: 6px 6px 0 0;
+.unsaved-indicator {
+  color: #fa8c16;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
-    .file-title {
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #262626;
+.file-editor-container {
+  /* Container for different editor types */
+}
 
-      i {
-        color: #1890ff;
-      }
-    }
+.markdown-editor-wrapper {
+  /* Wrapper for angular-markdown-editor */
+}
 
-    .file-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-  }
+.simple-editor .file-textarea.text-editor {
+  width: 100%;
+  min-height: 300px;
+  padding: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 0 0 6px 6px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  background: white;
+}
 
-  .file-view {
-    padding: 16px;
-
-    .text-content {
-      white-space: pre-wrap;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      background: #f8f8f8;
-      padding: 16px;
-      border-radius: 4px;
-      border: 1px solid #e8e8e8;
-      overflow-x: auto;
-    }
-
-    // Markdown content styles for view mode
-    ::ng-deep {
-      h1, h2, h3, h4, h5, h6 {
-        margin-top: 16px;
-        margin-bottom: 8px;
-        font-weight: 600;
-        line-height: 1.25;
-
-        &:first-child {
-          margin-top: 0;
-        }
-      }
-
-      h1 { font-size: 1.5em; }
-      h2 { font-size: 1.3em; }
-      h3 { font-size: 1.1em; }
-
-      p {
-        margin-bottom: 12px;
-        line-height: 1.6;
-      }
-
-      code {
-        background: #f3f4f6;
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-family: monospace;
-        font-size: 0.9em;
-      }
-
-      pre {
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
-        border-radius: 4px;
-        padding: 12px;
-        overflow-x: auto;
-        margin: 12px 0;
-
-        code {
-          background: none;
-          padding: 0;
-        }
-      }
-
-      ul, ol {
-        padding-left: 20px;
-        margin-bottom: 12px;
-      }
-
-      blockquote {
-        border-left: 4px solid #e5e7eb;
-        padding-left: 12px;
-        margin: 12px 0;
-        font-style: italic;
-      }
-    }
-  }
-
-  .file-editor-container {
-    .editor-split-view {
-      display: flex;
-      height: 500px;
-
-      .editor-pane,
-      .preview-pane {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-
-      .editor-divider {
-        width: 1px;
-        background: #d9d9d9;
-        margin: 0;
-      }
-
-      .pane-title {
-        margin: 0;
-        padding: 8px 12px;
-        background: #f0f0f0;
-        border-bottom: 1px solid #d9d9d9;
-        font-size: 14px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: #595959;
-      }
-
-      .markdown-toolbar {
-        display: flex;
-        gap: 4px;
-        padding: 8px 12px;
-        background: #fafafa;
-        border-bottom: 1px solid #e8e8e8;
-        flex-wrap: wrap;
-
-        .toolbar-btn {
-          border: none;
-          background: transparent;
-          padding: 6px 8px;
-          cursor: pointer;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 32px;
-          height: 32px;
-          transition: all 0.2s ease;
-
-          &:hover {
-            background: #e6f7ff;
-            color: #1890ff;
-          }
-
-          .toolbar-text {
-            font-weight: bold;
-            font-size: 12px;
-          }
-        }
-
-        .toolbar-divider {
-          width: 1px;
-          background: #d9d9d9;
-          margin: 0 6px;
-          align-self: stretch;
-        }
-      }
-
-      .file-textarea {
-        flex: 1;
-        resize: none;
-        border: none;
-        outline: none;
-        padding: 16px;
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        font-size: 14px;
-        line-height: 1.6;
-        background: white;
-
-        &:focus {
-          box-shadow: none;
-        }
-      }
-
-      .preview-content {
-        flex: 1;
-        padding: 16px;
-        overflow-y: auto;
-        background: white;
-        border-left: 1px solid #e8e8e8;
-
-        // Markdown content styles for preview
-        ::ng-deep {
-          h1, h2, h3, h4, h5, h6 {
-            margin-top: 16px;
-            margin-bottom: 8px;
-            font-weight: 600;
-            line-height: 1.25;
-
-            &:first-child {
-              margin-top: 0;
-            }
-          }
-
-          h1 { font-size: 1.5em; }
-          h2 { font-size: 1.3em; }
-          h3 { font-size: 1.1em; }
-
-          p {
-            margin-bottom: 12px;
-            line-height: 1.6;
-          }
-
-          code {
-            background: #f3f4f6;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: monospace;
-            font-size: 0.9em;
-          }
-
-          pre {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            padding: 12px;
-            overflow-x: auto;
-            margin: 12px 0;
-
-            code {
-              background: none;
-              padding: 0;
-            }
-          }
-
-          ul, ol {
-            padding-left: 20px;
-            margin-bottom: 12px;
-          }
-
-          blockquote {
-            border-left: 4px solid #e5e7eb;
-            padding-left: 12px;
-            margin: 12px 0;
-            font-style: italic;
-          }
-        }
-      }
-    }
-
-    .simple-editor {
-      .file-textarea.text-editor {
-        width: 100%;
-        min-height: 300px;
-        padding: 16px;
-        border: 1px solid #d9d9d9;
-        border-radius: 0 0 6px 6px;
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        font-size: 14px;
-        line-height: 1.6;
-        resize: vertical;
-        background: white;
-
-        &:focus {
-          border-color: #1890ff;
-          box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-          outline: none;
-        }
-      }
-    }
-
-    .editor-help {
-      padding: 12px 16px;
-      background: #f8f9fa;
-      border-top: 1px solid #e8e8e8;
-      border-radius: 0 0 6px 6px;
-      font-size: 12px;
-      color: #666;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-  }
+.simple-editor .file-textarea.text-editor:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  outline: none;
 }

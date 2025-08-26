@@ -177,21 +177,10 @@ nz-select {
 
 .create-readme-section {
   margin-bottom: 8px;
+  display: flex;
+  justify-content: center;
 
-  .quick-readme-form {
-    margin-top: 8px;
-    padding: 8px;
-    background: #fafafa;
-    border-radius: 4px;
-
-    .quick-actions {
-      margin-top: 8px;
-      display: flex;
-      justify-content: flex-end;
-    }
-  }
-
-  button[nzType="dashed"] {
+  button[nzType="default"] {
     border-color: #1890ff;
     color: #1890ff;
 
@@ -206,8 +195,4 @@ nz-select {
       color: #40a9ff;
     }
   }
-}
-
-.edit-readme-section {
-  margin-bottom: 8px;
 }

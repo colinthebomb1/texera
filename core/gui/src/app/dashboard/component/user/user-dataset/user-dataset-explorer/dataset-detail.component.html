@@ -90,6 +90,18 @@
         <div style="display: flex">
           <button
             nz-button
+            *ngIf="isEditableFile(currentDisplayedFileName)"
+            nz-tooltip="Edit File"
+            [disabled]="!isLogin || userDatasetAccessLevel !== 'WRITE'"
+            (click)="onClickEditFile()">
+            <i
+              nz-icon
+              nzTheme="outline"
+              nzType="edit">
+            </i>
+          </button>
+          <button
+            nz-button
             *ngIf="selectedVersion"
             nz-tooltip="Download the file"
             [disabled]="!isLogin"
@@ -155,7 +167,7 @@
 
     <!-- Use file editor for editable files -->
     <texera-user-dataset-file-editor
-      *ngIf="selectedVersion && isEditableFile(currentDisplayedFileName)"
+      *ngIf="selectedVersion && isEditMode"
       [did]="did"
       [dvid]="selectedVersion?.dvid"
       [selectedVersion]="selectedVersion"
@@ -166,7 +178,9 @@
       [isLogin]="isLogin"
       [chunkSizeMB]="chunkSizeMB"
       [maxConcurrentChunks]="maxConcurrentChunks"
-      (userMakeChanges)="onFileChanged()">
+      [isEditMode]="isEditMode"
+      (userMakeChanges)="onFileChanged()"
+      (editCanceled)="exitEditMode()">
     </texera-user-dataset-file-editor>
 
     <texera-user-dataset-file-renderer
@@ -246,34 +260,14 @@
           <div *ngIf="userDatasetAccessLevel === 'WRITE' && !hasReadmeFile()" class="create-readme-section">
             <button
               nz-button
-              nzType="dashed"
-              nzBlock
+              nzType="default"
               nzSize="small"
-              (click)="showReadmeForm = !showReadmeForm">
+              class="compact-readme-btn"
+              [nzLoading]="isCreatingReadme"
+              (click)="onClickCreateReadme()">
               <i nz-icon nzType="file-add"></i>
-              {{ showReadmeForm ? 'Cancel' : 'Create README.md' }}
+              Create README.md
             </button>
-
-            <!-- README creation form -->
-            <div *ngIf="showReadmeForm">
-              <textarea
-                nz-input
-                [(ngModel)]="readmeContent"
-                [nzAutosize]="{ minRows: 3, maxRows: 6 }"
-                placeholder="## Dataset README&#10;&#10;Describe your dataset here...">
-              </textarea>
-              <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
-                <button
-                  nz-button
-                  nzType="primary"
-                  nzSize="small"
-                  (click)="onClickCreateReadme()"
-                  [nzLoading]="isCreatingReadme"
-                  [disabled]="!readmeContent.trim()">
-                  Create
-                </button>
-              </div>
-            </div>
           </div>
 
           <texera-user-dataset-version-filetree

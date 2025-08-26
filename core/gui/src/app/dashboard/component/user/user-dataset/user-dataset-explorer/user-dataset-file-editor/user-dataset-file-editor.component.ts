@@ -1,4 +1,3 @@
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -28,18 +27,22 @@ import {
   Output,
   SimpleChanges,
   ViewChild,
+  ViewEncapsulation,
 } from "@angular/core";
 import { DatasetService } from "../../../../../service/user/dataset/dataset.service";
 import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
 import { NotificationService } from "../../../../../../common/service/notification/notification.service";
 import { switchMap } from "rxjs/operators";
 import { of } from "rxjs";
+import { EditorInstance, EditorOption } from 'angular-markdown-editor';
+import { MarkdownService } from 'ngx-markdown';
 
 @UntilDestroy()
 @Component({
   selector: "texera-user-dataset-file-editor",
   templateUrl: "./user-dataset-file-editor.component.html",
   styleUrls: ["./user-dataset-file-editor.component.scss"],
+  encapsulation: ViewEncapsulation.None,
 })
 export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   @Input() did: number | undefined;
@@ -52,26 +55,36 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   @Input() isLogin: boolean = true;
   @Input() chunkSizeMB!: number;
   @Input() maxConcurrentChunks!: number;
+  @Input() isEditMode: boolean = true;
   @Output() userMakeChanges = new EventEmitter<void>();
+  @Output() editCanceled = new EventEmitter<void>();
 
   @ViewChild("fileTextarea") fileTextarea!: ElementRef<HTMLTextAreaElement>;
 
   public fileContent: string = "";
-  public isEditing: boolean = false;
   public fileExists: boolean = false;
   public isLoading: boolean = false;
   public editingContent: string = "";
   public fileType: 'markdown' | 'text' | 'unsupported' = 'unsupported';
   public showFileContent: boolean = false;
+
+  // Angular Markdown Editor properties
+  public bsEditorInstance!: EditorInstance;
+  public editorOptions!: EditorOption;
+
   constructor(
     private datasetService: DatasetService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private markdownService: MarkdownService
   ) {}
 
   ngOnInit(): void {
+    this.initializeEditorOptions();
+
     if (this.dvid && this.datasetName && this.selectedVersion && this.filePath) {
       this.determineFileType();
       this.loadFile();
+      this.isEditMode = true;
     }
   }
 
@@ -83,7 +96,7 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
       this.selectedVersion &&
       this.filePath
     ) {
-      this.isEditing = false;
+      this.isEditMode = false;
       this.showFileContent = false;
       this.isLoading = false;
       this.fileExists = false;
@@ -93,6 +106,22 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
       this.determineFileType();
       this.loadFile();
     }
+  }
+
+  private initializeEditorOptions(): void {
+    this.editorOptions = {
+      autofocus: false,
+      iconlibrary: 'fa',
+      savable: false,
+      onShow: (e: EditorInstance) => {
+        this.bsEditorInstance = e;
+        console.log('Markdown editor initialized');
+      },
+      onChange: (e: EditorInstance) => {
+        this.editingContent = e.getContent();
+      },
+      parser: (val: string) => this.parseMarkdown(val)
+    };
   }
 
   private determineFileType(): void {
@@ -112,7 +141,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
         this.fileType = 'unsupported';
     }
   }
-
 
   private loadFile(): void {
     if (!this.did || !this.dvid || !this.datasetName || !this.selectedVersion || !this.filePath) return;
@@ -149,19 +177,19 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
       });
   }
 
-  public startEditing(): void {
-    if (!this.userHasWriteAccess || this.fileType === 'unsupported') return;
-    this.editingContent = this.fileContent;
-    this.isEditing = true;
-  }
-
   public cancelEditing(): void {
     this.editingContent = this.fileContent;
-    this.isEditing = false;
+    this.isEditMode = false;
+    this.editCanceled.emit();
   }
 
-  public expandFile(): void {
-    this.startEditing();
+  public onMarkdownEditorChange(event: any): void {
+    if (event && event.detail && event.detail.eventData) {
+      this.editingContent = event.detail.eventData.getContent();
+    } else {
+      // Handle direct content change
+      this.editingContent = event;
+    }
   }
 
   public onEditorKeydown(event: KeyboardEvent): void {
@@ -183,39 +211,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
 
       this.editingContent = textarea.value;
     }
-  }
-
-  public insertMarkdown(before: string, after: string = "", placeholder: string = ""): void {
-    if (!this.fileTextarea || this.fileType !== 'markdown') return;
-
-    const textarea = this.fileTextarea.nativeElement;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-
-    let insertText: string;
-    if (selectedText) {
-      insertText = before + selectedText + after;
-    } else {
-      insertText = before + placeholder + after;
-    }
-
-    // Trigger input event to preserve undo
-    textarea.focus();
-    document.execCommand("insertText", false, insertText);
-
-    this.editingContent = textarea.value;
-
-    // Update cursor position
-    setTimeout(() => {
-      if (selectedText) {
-        textarea.selectionStart = start + before.length;
-        textarea.selectionEnd = start + before.length + selectedText.length;
-      } else {
-        textarea.selectionStart = textarea.selectionEnd = start + before.length;
-      }
-      textarea.focus();
-    });
   }
 
   public saveFile(): void {
@@ -253,7 +248,6 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
         }),
         switchMap(progress => {
           if (progress.status === "finished") {
-            // Fix: Use only the filename, not the full path
             const fileName = this.getFileName();
             const versionMessage = successMessage.includes("created")
               ? `Created ${fileName}`
@@ -270,7 +264,7 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
           if (result && typeof result === "object" && "dvid" in result) {
             this.fileExists = true;
             this.fileContent = content;
-            this.isEditing = false;
+            this.isEditMode = false;
             this.notificationService.success(successMessage);
             this.userMakeChanges.emit();
           }
@@ -295,11 +289,26 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
 
   public getFileName(): string {
     if (!this.filePath) return '';
-
     return this.filePath.split('/').pop() || this.filePath;
   }
 
   public isEditable(): boolean {
     return this.fileType === 'markdown' || this.fileType === 'text';
+  }
+
+  public hasUnsavedChanges(): boolean {
+    return this.editingContent !== this.fileContent;
+  }
+
+  private parseMarkdown(inputValue: string): string {
+    const markedOutput = this.markdownService.parse(inputValue.trim());
+    this.highlightCode();
+    return markedOutput;
+  }
+
+  private highlightCode(): void {
+    setTimeout(() => {
+      this.markdownService.highlight();
+    });
   }
 }
