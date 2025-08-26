@@ -34,8 +34,8 @@ import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
 import { NotificationService } from "../../../../../../common/service/notification/notification.service";
 import { switchMap } from "rxjs/operators";
 import { of } from "rxjs";
-import { EditorInstance, EditorOption } from 'angular-markdown-editor';
-import { MarkdownService } from 'ngx-markdown';
+import { EditorInstance, EditorOption } from "angular-markdown-editor";
+import { MarkdownService } from "ngx-markdown";
 
 @UntilDestroy()
 @Component({
@@ -65,7 +65,7 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   public fileExists: boolean = false;
   public isLoading: boolean = false;
   public editingContent: string = "";
-  public fileType: 'markdown' | 'text' | 'unsupported' = 'unsupported';
+  public fileType: "markdown" | "text" | "unsupported" = "unsupported";
   public showFileContent: boolean = false;
 
   // Angular Markdown Editor properties
@@ -111,34 +111,34 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
   private initializeEditorOptions(): void {
     this.editorOptions = {
       autofocus: false,
-      iconlibrary: 'fa',
+      iconlibrary: "fa",
       savable: false,
       onShow: (e: EditorInstance) => {
         this.bsEditorInstance = e;
-        console.log('Markdown editor initialized');
+        console.log("Markdown editor initialized");
       },
       onChange: (e: EditorInstance) => {
         this.editingContent = e.getContent();
       },
-      parser: (val: string) => this.parseMarkdown(val)
+      parser: (val: string) => this.parseMarkdown(val),
     };
   }
 
   private determineFileType(): void {
-    const extension = this.filePath.toLowerCase().split('.').pop();
+    const extension = this.filePath.toLowerCase().split(".").pop();
     switch (extension) {
-      case 'md':
-      case 'markdown':
-        this.fileType = 'markdown';
+      case "md":
+      case "markdown":
+        this.fileType = "markdown";
         break;
-      case 'txt':
-      case 'log':
-      case 'yml':
-      case 'yaml':
-        this.fileType = 'text';
+      case "txt":
+      case "log":
+      case "yml":
+      case "yaml":
+        this.fileType = "text";
         break;
       default:
-        this.fileType = 'unsupported';
+        this.fileType = "unsupported";
     }
   }
 
@@ -238,20 +238,12 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
           const fileBlob = new Blob([content], { type: mimeType });
           const file = new File([fileBlob], fileName, { type: mimeType });
 
-          return this.datasetService.multipartUpload(
-            datasetName,
-            fileName,
-            file,
-            50 * 1024 * 1024,
-            10
-          );
+          return this.datasetService.multipartUpload(datasetName, fileName, file, 50 * 1024 * 1024, 10);
         }),
         switchMap(progress => {
           if (progress.status === "finished") {
             const fileName = this.getFileName();
-            const versionMessage = successMessage.includes("created")
-              ? `Created ${fileName}`
-              : `Updated ${fileName}`;
+            const versionMessage = successMessage.includes("created") ? `Created ${fileName}` : `Updated ${fileName}`;
 
             return this.datasetService.createDatasetVersion(this.did!, versionMessage);
           }
@@ -278,22 +270,22 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
 
   private getMimeType(): string {
     switch (this.fileType) {
-      case 'markdown':
-        return 'text/markdown';
-      case 'text':
-        return 'text/plain';
+      case "markdown":
+        return "text/markdown";
+      case "text":
+        return "text/plain";
       default:
-        return 'text/plain';
+        return "text/plain";
     }
   }
 
   public getFileName(): string {
-    if (!this.filePath) return '';
-    return this.filePath.split('/').pop() || this.filePath;
+    if (!this.filePath) return "";
+    return this.filePath.split("/").pop() || this.filePath;
   }
 
   public isEditable(): boolean {
-    return this.fileType === 'markdown' || this.fileType === 'text';
+    return this.fileType === "markdown" || this.fileType === "text";
   }
 
   public hasUnsavedChanges(): boolean {

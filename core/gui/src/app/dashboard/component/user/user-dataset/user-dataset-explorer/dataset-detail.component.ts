@@ -40,7 +40,7 @@ import { DatasetStagedObject } from "../../../../../common/type/dataset-staged-o
 import { NzModalService } from "ng-zorro-antd/modal";
 import { UserDatasetVersionCreatorComponent } from "./user-dataset-version-creator/user-dataset-version-creator.component";
 import { AdminSettingsService } from "../../../../service/admin/settings/admin-settings.service";
-import {of} from "rxjs";
+import { of } from "rxjs";
 
 export const THROTTLE_TIME_MS = 1000;
 
@@ -251,7 +251,7 @@ export class DatasetDetailComponent implements OnInit {
       }
     }, 500); // Small delay to ensure backend has processed the new version
 
-    this.exitEditMode()
+    this.exitEditMode();
   }
 
   private findFileInTree(fileName: string, nodes: DatasetFileNode[] = this.fileTreeNodeList): DatasetFileNode | null {
@@ -271,13 +271,13 @@ export class DatasetDetailComponent implements OnInit {
 
   public onClickCreateReadme(): void {
     this.modalService.confirm({
-      nzTitle: 'Create README.md',
-      nzContent: 'Are you sure you want to create a README.md file for this dataset?',
-      nzOkText: 'Yes, Create',
-      nzCancelText: 'Cancel',
+      nzTitle: "Create README.md",
+      nzContent: "Are you sure you want to create a README.md file for this dataset?",
+      nzOkText: "Yes, Create",
+      nzCancelText: "Cancel",
       nzOnOk: () => {
         this.createReadmeFile();
-      }
+      },
     });
   }
 
@@ -337,9 +337,9 @@ export class DatasetDetailComponent implements OnInit {
   }
 
   public isEditableFile(fileName: string): boolean {
-    const extension = fileName.toLowerCase().split('.').pop();
-    const editableExtensions = ['md', 'markdown', 'txt', 'log', 'yml', 'yaml'];
-    return editableExtensions.includes(extension || '');
+    const extension = fileName.toLowerCase().split(".").pop();
+    const editableExtensions = ["md", "markdown", "txt", "log", "yml", "yaml"];
+    return editableExtensions.includes(extension || "");
   }
 
   public onClickEditFile(): void {

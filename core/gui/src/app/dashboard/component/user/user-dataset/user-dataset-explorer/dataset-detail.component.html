@@ -257,7 +257,9 @@
           </div>
 
           <!-- Simple README creation in sidebar -->
-          <div *ngIf="userDatasetAccessLevel === 'WRITE' && !hasReadmeFile()" class="create-readme-section">
+          <div
+            *ngIf="userDatasetAccessLevel === 'WRITE' && !hasReadmeFile()"
+            class="create-readme-section">
             <button
               nz-button
               nzType="default"
@@ -265,7 +267,9 @@
               class="compact-readme-btn"
               [nzLoading]="isCreatingReadme"
               (click)="onClickCreateReadme()">
-              <i nz-icon nzType="file-add"></i>
+              <i
+                nz-icon
+                nzType="file-add"></i>
               Create README.md
             </button>
           </div>

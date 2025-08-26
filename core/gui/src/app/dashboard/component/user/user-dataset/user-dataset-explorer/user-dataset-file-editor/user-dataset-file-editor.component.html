@@ -18,7 +18,9 @@
 -->
 
 <!-- Loading State -->
-<div *ngIf="isLoading" class="file-loading">
+<div
+  *ngIf="isLoading"
+  class="file-loading">
   <nz-spin nzTip="Loading file...">
     <nz-alert
       nzType="info"
@@ -27,20 +29,31 @@
 </div>
 
 <!-- Show file content if it exists and is editable -->
-<div *ngIf="!isLoading && fileExists && isEditable()" class="file-content">
-  <div *ngIf="isEditMode" class="file-expanded">
+<div
+  *ngIf="!isLoading && fileExists && isEditable()"
+  class="file-content">
+  <div
+    *ngIf="isEditMode"
+    class="file-expanded">
     <div class="file-header">
       <div class="file-title-section">
         <h4 class="file-title">
-          <i nz-icon [nzType]="fileType === 'markdown' ? 'file-markdown' : 'file-text'"></i>
+          <i
+            nz-icon
+            [nzType]="fileType === 'markdown' ? 'file-markdown' : 'file-text'"></i>
           {{ getFileName() }}
         </h4>
       </div>
 
       <div class="file-controls">
         <!-- Unsaved changes indicator -->
-        <span *ngIf="hasUnsavedChanges()" class="unsaved-indicator">
-          <i nz-icon nzType="edit" nzTheme="fill"></i>
+        <span
+          *ngIf="hasUnsavedChanges()"
+          class="unsaved-indicator">
+          <i
+            nz-icon
+            nzType="edit"
+            nzTheme="fill"></i>
           Unsaved changes
         </span>
 
@@ -52,7 +65,9 @@
             nzSize="small"
             [disabled]="!hasUnsavedChanges()"
             (click)="saveFile()">
-            <i nz-icon nzType="check"></i>
+            <i
+              nz-icon
+              nzType="check"></i>
             Save
           </button>
           <button
@@ -60,7 +75,9 @@
             nzType="default"
             nzSize="small"
             (click)="cancelEditing()">
-            <i nz-icon nzType="close"></i>
+            <i
+              nz-icon
+              nzType="close"></i>
             Cancel
           </button>
         </nz-button-group>
@@ -68,10 +85,13 @@
     </div>
 
     <!-- File Editor Mode -->
-    <div *ngIf="isEditMode" class="file-editor-container">
-
+    <div
+      *ngIf="isEditMode"
+      class="file-editor-container">
       <!-- Markdown Editor -->
-      <div *ngIf="fileType === 'markdown'" class="markdown-editor-wrapper">
+      <div
+        *ngIf="fileType === 'markdown'"
+        class="markdown-editor-wrapper">
         <angular-markdown-editor
           textareaId="markdownEditor"
           [options]="editorOptions"
@@ -83,7 +103,9 @@
       </div>
 
       <!-- Text Editor -->
-      <div *ngIf="fileType === 'text'" class="simple-editor">
+      <div
+        *ngIf="fileType === 'text'"
+        class="simple-editor">
         <textarea
           #fileTextarea
           [(ngModel)]="editingContent"
