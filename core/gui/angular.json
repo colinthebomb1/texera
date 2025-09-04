@@ -29,10 +29,15 @@
               "node_modules/jointjs/css/themes/default.css",
               "node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
               "node_modules/ng-zorro-antd/resizable/style/index.min.css",
+              "node_modules/bootstrap/dist/css/bootstrap.css",
+              "node_modules/bootstrap-markdown/css/bootstrap-markdown.min.css",
+              "node_modules/font-awesome/css/font-awesome.css",
               "src/styles.scss"
             ],
             "scripts": [
-              "./node_modules/marked/marked.min.js"
+              "./node_modules/marked/marked.min.js",
+              "node_modules/jquery/dist/jquery.js",
+              "node_modules/bootstrap-markdown/js/bootstrap-markdown.js"
             ],
             "customWebpackConfig": {
               "path": "./custom-webpack.config.js"

@@ -1,0 +1,84 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<div class="shared-description-container" [ngClass]="{'inline-mode': showInline, 'block-mode': !showInline}">
+
+  <div *ngIf="loading" class="loading-spinner">
+    <nz-spin nzSize="small"></nz-spin>
+  </div>
+
+  <div *ngIf="!loading" class="description-editor" style="margin-top: 16px;">
+    <div class="editor-header">
+      <h4>{{entityName}} Description</h4>
+      <div *ngIf="editable" class="editor-actions">
+        <button
+          nz-button
+          nzType="default"
+          nzSize="small"
+          (click)="togglePreview()"
+          title="Toggle Preview">
+          <i nz-icon [nzType]="isPreviewMode ? 'edit' : 'eye'" nzTheme="outline"></i>
+          {{ isPreviewMode ? 'Edit' : 'Preview' }}
+        </button>
+        <button
+          nz-button
+          nzType="default"
+          nzSize="small"
+          (click)="cancelEditing()"
+          [disabled]="false">
+          <i nz-icon nzType="close" nzTheme="outline"></i>
+          Close
+        </button>
+        <button
+          nz-button
+          nzType="primary"
+          nzSize="small"
+          (click)="saveDescription()"
+          [disabled]="!hasUnsavedChanges">
+          <i nz-icon nzType="save" nzTheme="outline"></i>
+          Save
+        </button>
+      </div>
+    </div>
+
+    <div class="markdown-editor-container">
+      <div *ngIf="isPreviewMode" class="preview-container">
+        <div class="preview-content" [innerHTML]="renderedDescription"></div>
+      </div>
+
+      <ng-container *ngIf="!isPreviewMode">
+        <div class="markdown-editor-wrapper">
+          <angular-markdown-editor
+            textareaId="sharedDescriptionEditor"
+            [options]="editorOptions"
+            name="editingContent"
+            [(ngModel)]="editingContent"
+            (onChange)="onMarkdownEditorChange($event)"
+            class="enhanced-markdown-editor">
+          </angular-markdown-editor>
+        </div>
+        <div class="editor-help">
+          <small class="help-text">
+            <i nz-icon nzType="info-circle" nzTheme="outline"></i>
+            Use the toolbar above or Markdown syntax.
+          </small>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

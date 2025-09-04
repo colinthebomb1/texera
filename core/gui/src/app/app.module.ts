@@ -172,6 +172,8 @@ import { AdminSettingsComponent } from "./dashboard/component/admin/settings/adm
 import { catchError, of } from "rxjs";
 import { FormlyRepeatDndComponent } from "./common/formly/repeat-dnd/repeat-dnd.component";
 import { NzInputNumberModule } from "ng-zorro-antd/input-number";
+import { MarkdownDescriptionComponent } from "./dashboard/component/user/shared/markdown-description/markdown-description.component";
+import { AngularMarkdownEditorModule } from "angular-markdown-editor";
 
 registerLocaleData(en);
 
@@ -264,6 +266,7 @@ registerLocaleData(en);
     HubSearchResultComponent,
     ComputingUnitSelectionComponent,
     AdminSettingsComponent,
+    MarkdownDescriptionComponent,
   ],
   imports: [
     BrowserModule,
@@ -330,6 +333,7 @@ registerLocaleData(en);
     NzDividerModule,
     NzProgressModule,
     NzInputNumberModule,
+    AngularMarkdownEditorModule.forRoot(),
   ],
   providers: [
     provideNzI18n(en_US),

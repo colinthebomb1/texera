@@ -1,0 +1,230 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.shared-description-container {
+  width: 100%;
+
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .description-editor {
+    background: white;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+
+      h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .editor-actions {
+        display: flex;
+        gap: 8px;
+
+        button {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+      }
+    }
+
+    .markdown-editor-container {
+      .markdown-editor-wrapper {
+        .enhanced-markdown-editor {
+          border: 1px solid #d9d9d9;
+          border-radius: 4px;
+          overflow: hidden;
+
+          // Style the toolbar
+          ::ng-deep .md-editor {
+            .md-header {
+              background: #fafafa;
+              border-bottom: 1px solid #e8e8e8;
+              padding: 8px 12px;
+
+              .btn-group {
+                .btn {
+                  border: none;
+                  background: transparent;
+                  color: #666;
+                  font-size: 14px;
+                  padding: 4px 8px;
+                  margin: 0 2px;
+                  border-radius: 3px;
+
+                  &:hover {
+                    background: #e6f7ff;
+                    color: #1890ff;
+                  }
+
+                  &.active {
+                    background: #1890ff;
+                    color: white;
+                  }
+                }
+              }
+            }
+
+            .md-editor-textarea {
+              min-height: 200px;
+              border: none;
+              padding: 12px;
+              font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+              font-size: 14px;
+              line-height: 1.5;
+              resize: vertical;
+
+              &:focus {
+                outline: none;
+                box-shadow: none;
+              }
+            }
+
+            .md-preview {
+              padding: 12px;
+              background: #fafafa;
+              border-left: 1px solid #e8e8e8;
+              min-height: 200px;
+              overflow-y: auto;
+            }
+          }
+        }
+      }
+
+      .editor-help {
+        margin-top: 8px;
+        text-align: right;
+
+        .help-text {
+          color: #999;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 4px;
+
+          .anticon {
+            color: #1890ff;
+          }
+        }
+      }
+
+      .preview-container {
+        .preview-header {
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #f0f0f0;
+
+          .preview-toggle-btn {
+            color: #999;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+
+            .anticon {
+              color: #1890ff;
+              margin-right: 4px;
+            }
+          }
+        }
+
+        .preview-content {
+          min-height: 300px;
+          height: auto;
+          padding: 12px;
+          border: 1px solid #f0f0f0;
+          border-radius: 4px;
+          background: #fafafa;
+          line-height: 1.6;
+
+          h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: #333;
+          }
+
+          p {
+            margin-bottom: 12px;
+            color: #666;
+          }
+
+          code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+          }
+
+          pre {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+
+            code {
+              background: none;
+              padding: 0;
+            }
+          }
+
+          blockquote {
+            border-left: 4px solid #1890ff;
+            padding-left: 16px;
+            margin-left: 0;
+            color: #666;
+            font-style: italic;
+          }
+
+          ul, ol {
+            padding-left: 20px;
+            margin-bottom: 12px;
+
+            li {
+              margin-bottom: 4px;
+            }
+          }
+
+          &:empty::after {
+            content: 'Nothing to preview...';
+            color: #bfbfbf;
+            font-style: italic;
+          }
+        }
+      }
+    }
+  }
+}
