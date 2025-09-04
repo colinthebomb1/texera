@@ -16,7 +16,7 @@
   ~ limitations under the License.
   -->
 
-<div class="shared-description-container" [ngClass]="{'inline-mode': showInline, 'block-mode': !showInline}">
+<div class="markdown-description-container" [ngClass]="{'inline-mode': showInline, 'block-mode': !showInline}">
 
   <div *ngIf="loading" class="loading-spinner">
     <nz-spin nzSize="small"></nz-spin>
@@ -64,7 +64,7 @@
       <ng-container *ngIf="!isPreviewMode">
         <div class="markdown-editor-wrapper">
           <angular-markdown-editor
-            textareaId="sharedDescriptionEditor"
+            textareaId="markdownDescriptionEditor"
             [options]="editorOptions"
             name="editingContent"
             [(ngModel)]="editingContent"

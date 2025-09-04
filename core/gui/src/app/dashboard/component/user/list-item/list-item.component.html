@@ -257,7 +257,7 @@
        [class.description-hoverable]="!editingDescription"
        (mouseenter)="hovering = true; $event.stopPropagation()"
        (mouseleave)="hovering = false; $event.stopPropagation()">
-    <texera-shared-description
+    <texera-markdown-description
       [description]="entry.description || ''"
       [entityName]="entry.name"
       [entityType]="entry.type"
@@ -265,6 +265,6 @@
       (descriptionChange)="confirmUpdateCustomDescription($event)"
       (editingStateChange)="onDescriptionEditingStateChange($event)"
       (closeDescription)="toggleDescription()">
-    </texera-shared-description>
+    </texera-markdown-description>
   </div>
 </nz-card>

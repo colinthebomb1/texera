@@ -172,7 +172,7 @@ import { AdminSettingsComponent } from "./dashboard/component/admin/settings/adm
 import { catchError, of } from "rxjs";
 import { FormlyRepeatDndComponent } from "./common/formly/repeat-dnd/repeat-dnd.component";
 import { NzInputNumberModule } from "ng-zorro-antd/input-number";
-import { MarkdownDescriptionComponent } from "./dashboard/component/user/shared/markdown-description/markdown-description.component";
+import { MarkdownDescriptionComponent } from "./dashboard/component/user/markdown-description/markdown-description.component";
 import { AngularMarkdownEditorModule } from "angular-markdown-editor";
 
 registerLocaleData(en);

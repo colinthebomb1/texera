@@ -78,7 +78,7 @@ export class ListItemComponent implements OnChanges {
   @Input() editable = false;
   private _entry?: DashboardEntry;
   hovering: boolean = false;
-  @ViewChild('sharedDescriptionComponent') sharedDescriptionComponent!: any;
+  @ViewChild('markdownDescriptionComponent') markdownDescriptionComponent!: any;
   public showDescription: boolean = false;
 
   @Input()
@@ -215,8 +215,8 @@ export class ListItemComponent implements OnChanges {
     if (this.showDescription) {
       // Force the component to start in preview mode, not edit mode
       setTimeout(() => {
-        if (this.sharedDescriptionComponent) {
-          this.sharedDescriptionComponent.togglePreview()
+        if (this.markdownDescriptionComponent) {
+          this.markdownDescriptionComponent.togglePreview()
         }
       }, 50);
     }

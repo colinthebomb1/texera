@@ -12,11 +12,11 @@ import {
 import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
 import { EditorInstance, EditorOption } from "angular-markdown-editor";
 import { MarkdownService } from "ngx-markdown";
-import { NotificationService } from "../../../../../common/service/notification/notification.service";
+import { NotificationService } from "../../../../common/service/notification/notification.service";
 
 @UntilDestroy()
 @Component({
-  selector: "texera-shared-description",
+  selector: "texera-markdown-description",
   templateUrl: "./markdown-description.component.html",
   styleUrls: ["./markdown-description.component.scss"],
   encapsulation: ViewEncapsulation.None,
