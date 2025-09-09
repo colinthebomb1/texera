@@ -40,6 +40,7 @@ import { DatasetStagedObject } from "../../../../../common/type/dataset-staged-o
 import { NzModalService } from "ng-zorro-antd/modal";
 import { UserDatasetVersionCreatorComponent } from "./user-dataset-version-creator/user-dataset-version-creator.component";
 import { AdminSettingsService } from "../../../../service/admin/settings/admin-settings.service";
+import { of } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { Subscription } from "rxjs";
 import { formatSpeed, formatTime } from "src/app/common/util/format.util";
@@ -93,6 +94,9 @@ export class DatasetDetailComponent implements OnInit {
 
   versionName: string = "";
   isCreatingVersion: boolean = false;
+
+  public isCreatingReadme: boolean = false;
+  public isEditMode: boolean = false;
 
   //  List of upload tasks – each task tracked by its filePath
   public uploadTasks: Array<
@@ -214,6 +218,149 @@ export class DatasetDetailComponent implements OnInit {
     }
   }
 
+  public onFileChanged(): void {
+    this.userMakeChanges.emit();
+
+    // Get the current filename to re-select after refresh
+    const currentFileName = this.currentDisplayedFileName;
+
+    this.retrieveDatasetVersionList();
+
+    // Wait a bit for the version list to update, then refresh the current version
+    setTimeout(() => {
+      if (this.versions.length > 0) {
+        // Select the latest version (newly created)
+        this.selectedVersion = this.versions[0];
+
+        // Refresh the file tree for the new version
+        if (this.did && this.selectedVersion.dvid) {
+          this.datasetService
+            .retrieveDatasetVersionFileTree(this.did, this.selectedVersion.dvid, this.isLogin)
+            .pipe(untilDestroyed(this))
+            .subscribe(data => {
+              this.fileTreeNodeList = data.fileNodes;
+              this.currentDatasetVersionSize = data.size;
+
+              // Try to find and re-select the same file we were editing
+              const fileNode = this.findFileInTree(currentFileName);
+              if (fileNode) {
+                this.loadFileContent(fileNode);
+              } else {
+                // Fallback to first file if our file isn't found
+                let currentNode = this.fileTreeNodeList[0];
+                while (currentNode && currentNode.type === "directory" && currentNode.children) {
+                  currentNode = currentNode.children[0];
+                }
+                if (currentNode) {
+                  this.loadFileContent(currentNode);
+                }
+              }
+            });
+        }
+      }
+    }, 500); // Small delay to ensure backend has processed the new version
+
+    this.exitEditMode();
+  }
+
+  private findFileInTree(fileName: string, nodes: DatasetFileNode[] = this.fileTreeNodeList): DatasetFileNode | null {
+    for (const node of nodes) {
+      if (node.name === fileName && node.type === "file") {
+        return node;
+      }
+      if (node.children) {
+        const found = this.findFileInTree(fileName, node.children);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  public onClickCreateReadme(): void {
+    this.modalService.confirm({
+      nzTitle: "Create README.md",
+      nzContent: "Are you sure you want to create a README.md file for this dataset?",
+      nzOkText: "Yes, Create",
+      nzCancelText: "Cancel",
+      nzOnOk: () => {
+        this.createReadmeFile();
+      },
+    });
+  }
+
+  private createReadmeFile(): void {
+    if (!this.did) return;
+
+    this.isCreatingReadme = true;
+    const defaultReadmeContent = "# Dataset README\n\nDescribe your dataset here...";
+
+    this.datasetService
+      .getDataset(this.did, this.isLogin)
+      .pipe(
+        switchMap(dashboardDataset => {
+          const datasetName = dashboardDataset.dataset.name;
+          const readmeBlob = new Blob([defaultReadmeContent], { type: "text/markdown" });
+          const readmeFile = new File([readmeBlob], "README.md", { type: "text/markdown" });
+          return this.datasetService.multipartUpload(
+            datasetName,
+            "README.md",
+            readmeFile,
+            this.chunkSizeMB * 1024 * 1024,
+            this.maxConcurrentChunks
+          );
+        }),
+        switchMap(progress => {
+          if (progress.status === "finished") {
+            return this.datasetService.createDatasetVersion(this.did!, "Created README.md");
+          }
+          return of(progress);
+        }),
+        untilDestroyed(this)
+      )
+      .subscribe({
+        next: result => {
+          if (result && typeof result === "object" && "dvid" in result) {
+            this.isCreatingReadme = false;
+            this.notificationService.success("README created successfully!");
+
+            this.currentDisplayedFileName = "README.md";
+            this.onFileChanged();
+
+            setTimeout(() => {
+              this.isEditMode = true;
+            }, 1000);
+          }
+        },
+        error: (error: unknown) => {
+          this.isCreatingReadme = false;
+          console.error("Error creating README:", error);
+          this.notificationService.error("Failed to create README");
+        },
+      });
+  }
+
+  public hasReadmeFile(): boolean {
+    return this.findFileInTree("README.md") !== null;
+  }
+
+  public isEditableFile(fileName: string): boolean {
+    const extension = fileName.toLowerCase().split(".").pop();
+    const editableExtensions = ["md", "markdown", "txt", "log", "yml", "yaml"];
+    return editableExtensions.includes(extension || "");
+  }
+
+  public onClickEditFile(): void {
+    if (!this.selectedVersion || !this.currentDisplayedFileName) return;
+
+    this.isEditMode = !this.isEditMode;
+  }
+
+  public exitEditMode(): void {
+    this.isEditMode = false;
+  }
+
   onPublicStatusChange(checked: boolean): void {
     // Handle the change in dataset public status
     if (this.did) {
@@ -332,6 +479,8 @@ export class DatasetDetailComponent implements OnInit {
   }
 
   onVersionSelected(version: DatasetVersion): void {
+    this.exitEditMode();
+
     this.selectedVersion = version;
     if (this.did && this.selectedVersion.dvid)
       this.datasetService
@@ -353,6 +502,7 @@ export class DatasetDetailComponent implements OnInit {
   }
 
   onVersionFileTreeNodeSelected(node: DatasetFileNode) {
+    this.exitEditMode();
     this.loadFileContent(node);
   }
 

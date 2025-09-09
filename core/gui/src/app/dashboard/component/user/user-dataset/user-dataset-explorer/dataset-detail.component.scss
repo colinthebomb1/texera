@@ -180,6 +180,28 @@ nz-select {
   margin-left: 20px;
 }
 
+.create-readme-section {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: center;
+
+  button[nzType="default"] {
+    border-color: #1890ff;
+    color: #1890ff;
+
+    &:hover {
+      border-color: #40a9ff;
+      color: #40a9ff;
+      background-color: #f0f8ff;
+    }
+
+    &:focus {
+      border-color: #40a9ff;
+      color: #40a9ff;
+    }
+  }
+}
+
 .version-creator {
   margin-top: 20px;
   padding: 40px;
