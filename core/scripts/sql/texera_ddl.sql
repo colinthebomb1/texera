@@ -41,7 +41,7 @@ DROP TABLE IF EXISTS workflow_user_access CASCADE;
 DROP TABLE IF EXISTS workflow_of_user CASCADE;
 DROP TABLE IF EXISTS user_config CASCADE;
 DROP TABLE IF EXISTS "user" CASCADE;
-DROP TABLE IF EXISTS time_log CASCADE;
+DROP TABLE IF EXISTS user_last_active_time CASCADE;
 DROP TABLE IF EXISTS workflow CASCADE;
 DROP TABLE IF EXISTS workflow_version CASCADE;
 DROP TABLE IF EXISTS project CASCADE;
@@ -231,6 +231,7 @@ CREATE TABLE IF NOT EXISTS dataset
     owner_uid      INT NOT NULL,
     name           VARCHAR(128) NOT NULL,
     is_public      BOOLEAN NOT NULL DEFAULT TRUE,
+    is_downloadable BOOLEAN NOT NULL DEFAULT TRUE,
     description    VARCHAR(512) NOT NULL,
     creation_time  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (owner_uid) REFERENCES "user"(uid) ON DELETE CASCADE
@@ -349,12 +350,13 @@ CREATE TABLE IF NOT EXISTS site_settings
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-CREATE TABLE IF NOT EXISTS time_log
+-- user_last_active_time table
+CREATE TABLE IF NOT EXISTS user_last_active_time
 (
     uid            INT          NOT NULL
         PRIMARY KEY
         REFERENCES "user"(uid),
-    last_login     TIMESTAMPTZ
+    last_active_time     TIMESTAMPTZ
 );
 
 -- computing_unit_user_access table
