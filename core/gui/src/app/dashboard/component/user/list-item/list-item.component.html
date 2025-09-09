@@ -60,9 +60,9 @@
 
     <div
       nz-col
-      nzFlex="30px"
-      *ngIf="isPrivateSearch">
-      <div class="edit-button">
+      nzFlex="30px">
+      <div class="edit-button"
+           *ngIf="isPrivateSearch">
         <button
           nz-button
           nzType="text"
@@ -78,11 +78,11 @@
         <button
           nz-button
           nzType="text"
-          title="Edit Description"
-          (click)="onEditDescription();$event.stopPropagation()">
+          title="View/Edit Description"
+          (click)="toggleDescription();$event.stopPropagation()">
           <i
             nz-icon
-            nzType="form"></i>
+            nzType="file-text"></i>
         </button>
       </div>
     </div>
@@ -108,9 +108,9 @@
 
       <div
         class="resource-description truncate-single-line"
-        (click)="onEditDescription();$event.stopPropagation()"
+        (click)="toggleDescription();$event.stopPropagation()"
         *ngIf="!editingDescription">
-        {{ entry.description ? entry.description.slice(0, 200) : (hovering) ? 'Write a description...' : '' }}
+        {{ getCleanDescription() }}
       </div>
       <textarea
         *ngIf="editingDescription"
@@ -194,6 +194,13 @@
     *ngIf="isPrivateSearch"
     class="button-group">
     <button
+      nz-button
+      nzType="text"
+      title="Description"
+      (click)="toggleDescription()">
+      <i nz-icon nzType="file-text"></i>
+    </button>
+    <button
       *ngIf="entry.type==='workflow'"
       nz-button
       nzType="text"
@@ -244,5 +251,20 @@
         nz-icon
         nzType="delete"></i>
     </button>
+  </div>
+
+  <div *ngIf="showDescription" class="list-item-description"
+       [class.description-hoverable]="!editingDescription"
+       (mouseenter)="hovering = true; $event.stopPropagation()"
+       (mouseleave)="hovering = false; $event.stopPropagation()">
+    <texera-markdown-description
+      [description]="entry.description || ''"
+      [entityName]="entry.name"
+      [entityType]="entry.type"
+      [editable]="canEdit"
+      (descriptionChange)="confirmUpdateCustomDescription($event)"
+      (editingStateChange)="onDescriptionEditingStateChange($event)"
+      (closeDescription)="toggleDescription()">
+    </texera-markdown-description>
   </div>
 </nz-card>

@@ -78,6 +78,8 @@ export class ListItemComponent implements OnChanges {
   @Input() editable = false;
   private _entry?: DashboardEntry;
   hovering: boolean = false;
+  @ViewChild('markdownDescriptionComponent') markdownDescriptionComponent!: any;
+  public showDescription: boolean = false;
 
   @Input()
   get entry(): DashboardEntry {
@@ -104,7 +106,7 @@ export class ListItemComponent implements OnChanges {
     private hubService: HubService,
     private downloadService: DownloadService,
     private cdr: ChangeDetectorRef,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {}
 
   initializeEntry() {
@@ -196,6 +198,56 @@ export class ListItemComponent implements OnChanges {
         this.refresh.emit();
       });
     }
+  }
+
+  get canEdit(): boolean {
+    if (this.entry.type === 'workflow') {
+      return this.entry.workflow?.isOwner ?? false;
+    } else if (this.entry.type === 'dataset') {
+      return this.entry.dataset?.isOwner ?? false;
+    }
+    return false;
+  }
+
+  toggleDescription(): void {
+    this.showDescription = !this.showDescription;
+
+    if (this.showDescription) {
+      // Force the component to start in preview mode, not edit mode
+      setTimeout(() => {
+        if (this.markdownDescriptionComponent) {
+          this.markdownDescriptionComponent.togglePreview()
+        }
+      }, 50);
+    }
+  }
+
+  public onDescriptionEditingStateChange(isEditing: boolean): void {
+    this.editingDescription = isEditing;
+    this.cdr.markForCheck();
+  }
+
+  getCleanDescription(): string {
+    if (!this.entry.description) {
+      return this.hovering ? 'Write a description...' : '';
+    }
+
+    let cleanText = this.entry.description
+      .replace(/```[\s\S]*?```/g, ' ') // Remove code blocks
+      .replace(/`([^`]+)`/g, '$1') // Remove inline code backticks
+      .replace(/#{1,6}\s+/g, '') // Remove headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+      .replace(/\*/g, '') // Remove asterisks
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links
+      .replace(/>\s+/g, '') // Remove blockquotes
+      .replace(/\n+/g, ' ') // Replace newlines with spaces
+      .replace(/\s+/g, ' ') // Collapse multiple spaces
+      .trim();
+
+    return cleanText.length > 200
+      ? cleanText.slice(0, 200) + '...'
+      : cleanText;
   }
 
   public onClickDownload = (): void => {

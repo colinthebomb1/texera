@@ -174,6 +174,7 @@ import { FormlyRepeatDndComponent } from "./common/formly/repeat-dnd/repeat-dnd.
 import { NzInputNumberModule } from "ng-zorro-antd/input-number";
 import { UserDatasetFileEditorComponent } from "./dashboard/component/user/user-dataset/user-dataset-explorer/user-dataset-file-editor/user-dataset-file-editor.component";
 import { AngularMarkdownEditorModule } from "angular-markdown-editor";
+import { MarkdownDescriptionComponent } from "./dashboard/component/user/markdown-description/markdown-description.component";
 
 registerLocaleData(en);
 
@@ -267,6 +268,7 @@ registerLocaleData(en);
     ComputingUnitSelectionComponent,
     AdminSettingsComponent,
     UserDatasetFileEditorComponent,
+    MarkdownDescriptionComponent,
   ],
   imports: [
     BrowserModule,
