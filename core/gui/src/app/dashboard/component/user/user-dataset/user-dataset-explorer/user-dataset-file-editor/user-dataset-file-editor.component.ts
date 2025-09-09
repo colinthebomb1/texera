@@ -37,6 +37,7 @@ import { of } from "rxjs";
 import { EditorInstance, EditorOption } from "angular-markdown-editor";
 import { MarkdownService } from "ngx-markdown";
 
+
 @UntilDestroy()
 @Component({
   selector: "texera-user-dataset-file-editor",
@@ -292,10 +293,36 @@ export class UserDatasetFileEditorComponent implements OnInit, OnChanges {
     return this.editingContent !== this.fileContent;
   }
 
+  private async parseMarkdownAsync(inputValue: string): Promise<string> {
+    try {
+      const result = this.markdownService.parse(inputValue.trim());
+
+      if (result instanceof Promise) {
+        return await result;
+      } else {
+        return result as string;
+      }
+    } catch (error) {
+      console.error('Error parsing markdown:', error);
+      return inputValue;
+    }
+  }
+
   private parseMarkdown(inputValue: string): string {
-    const markedOutput = this.markdownService.parse(inputValue.trim());
-    this.highlightCode();
-    return markedOutput;
+    // For the editor preview, we need to handle async rendering
+    this.parseMarkdownAsync(inputValue).then(rendered => {
+      // Update the preview manually after async parsing
+      if (this.bsEditorInstance) {
+        // Force update the preview pane
+        const previewElement = document.querySelector('.md-preview');
+        if (previewElement) {
+          previewElement.innerHTML = rendered;
+        }
+      }
+    });
+
+    // Return a temporary placeholder while processing
+    return '<p><em>Rendering markdown...</em></p>';
   }
 
   private highlightCode(): void {
