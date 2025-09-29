@@ -22,6 +22,7 @@ on:
     branches:
       - 'ci-enable/**'
       - 'main'
+      - 'colin-workflow-test'
   pull_request:
   workflow_dispatch:
 
