@@ -21,7 +21,6 @@
 export interface GuiConfig {
   exportExecutionResultEnabled: boolean;
   autoAttributeCorrectionEnabled: boolean;
-  userSystemEnabled: boolean;
   selectingFilesFromDatasetsEnabled: boolean;
   localLogin: boolean;
   googleLogin: boolean;
@@ -39,6 +38,7 @@ export interface GuiConfig {
   operatorConsoleMessageBufferSize: number;
   defaultLocalUser?: { username?: string; password?: string };
   expirationTimeInMinutes: number;
+  activeTimeInMinutes: number;
 }
 
 export interface SidebarTabs {

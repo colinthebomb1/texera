@@ -54,6 +54,7 @@ class ConfigResource {
         "username" -> GuiConfig.guiLoginDefaultLocalUserUsername,
         "password" -> GuiConfig.guiLoginDefaultLocalUserPassword
       ),
+      "activeTimeInMinutes" -> GuiConfig.guiWorkflowWorkspaceActiveTimeInMinutes,
       // flags from the auth.conf if needed
       "expirationTimeInMinutes" -> AuthConfig.jwtExpirationMinutes
     )
@@ -64,7 +65,6 @@ class ConfigResource {
   def getUserSystemConfig: Map[String, Any] =
     Map(
       // flags from the user-system.conf
-      "inviteOnly" -> UserSystemConfig.inviteOnly,
-      "userSystemEnabled" -> UserSystemConfig.isUserSystemEnabled
+      "inviteOnly" -> UserSystemConfig.inviteOnly
     )
 }
